@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+*.sqlite3
+sisters_nook.db
+*.log
+venv/
+.venv/
+env/
+ENV/
+node_modules/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
