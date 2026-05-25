@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row">
+    <div class="col-4">
+      <h2>Menu</h2>
+      <a href="{{ url_for('menu') }}" class="btn btn-primary">Manage Menu</a>
+    </div>
+    <div class="col-4">
+      <h2>Orders</h2>
+      <a href="{{ url_for('orders') }}" class="btn btn-primary">Create Orders</a>
+    </div>
+    <div class="col-4">
+      <h2>Payments</h2>
+      <a href="{{ url_for('payments') }}" class="btn btn-primary">Log Payments</a>
+    </div>
+  </div>
+{% endblock %}

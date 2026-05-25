@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
 from .schema import Base
@@ -17,7 +18,10 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False
 
 def reset_database() -> None:
     """Drop and recreate the SQLite schema to start from a known clean slate."""
-    Base.metadata.drop_all(engine)
+    try:
+        Base.metadata.drop_all(engine)
+    except OperationalError:
+        pass
     Base.metadata.create_all(engine)
 
 
