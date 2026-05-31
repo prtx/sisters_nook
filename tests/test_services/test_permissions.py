@@ -105,11 +105,11 @@ def test_permissions_payments_both(perms_setup):
     payment_service.log_payment(perms_setup["employee"], order.id, order.grand_total, PaymentMethod.CARD)
 
 
-def test_permissions_refunds_admin_only(perms_setup):
+def test_permissions_refunds_allowed(perms_setup):
     refund_service = perms_setup["refund_service"]
     payment_service = perms_setup["payment_service"]
     order = perms_setup["order_service"].create_order(perms_setup["admin"], [OrderLineRequest(perms_setup["latte"].id, 1)])
     payment = payment_service.log_payment(perms_setup["admin"], order.id, order.grand_total, PaymentMethod.CASH)
     refund_service.create_refund(perms_setup["admin"], payment.id, Decimal("1.00"), "Need")
-    with pytest.raises(PermissionError):
-        refund_service.create_refund(perms_setup["employee"], payment.id, Decimal("1.00"), "Bad")
+    refund = refund_service.create_refund(perms_setup["employee"], payment.id, Decimal("0.50"), "Employee handled")
+    assert refund.refunded_by_user_id == perms_setup["employee"].id

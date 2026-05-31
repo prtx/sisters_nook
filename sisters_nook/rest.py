@@ -327,7 +327,7 @@ def log_payment():
 
 
 @api.route("/refunds", methods=["POST"])
-@require_roles(UserRole.ADMIN)
+@require_roles(UserRole.ADMIN, UserRole.EMPLOYEE)
 def refund_payment():
     payload = request.get_json() or {}
 

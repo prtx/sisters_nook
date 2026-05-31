@@ -108,7 +108,7 @@ def test_PERMISSIONS_008_employee_logged_out_payment(admin_employee, client):
     assert pay_resp.status_code == 201
 
 
-def test_PERMISSIONS_009_refunds_admin_only(admin_employee, client):
+def test_PERMISSIONS_009_refunds_access(admin_employee, client):
     admin = admin_employee["admin"]
     employee = admin_employee["employee"]
     latte = admin_employee["latte"]
@@ -132,9 +132,9 @@ def test_PERMISSIONS_009_refunds_admin_only(admin_employee, client):
     ref_resp = client.post(
         "/api/refunds",
         headers=api_headers(employee),
-        json={"payment_id": payment_id, "amount": "1.00", "reason": "Nope"},
+        json={"payment_id": payment_id, "amount": "1.00", "reason": "Handled"},
     )
-    assert ref_resp.status_code == 403
+    assert ref_resp.status_code == 201
     ref_resp = client.post(
         "/api/refunds",
         headers=api_headers(admin),

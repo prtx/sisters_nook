@@ -4,7 +4,7 @@ from sisters_nook.schema import Order, OrderStatus, PaymentMethod, PaymentStatus
 from tests.test_api.conftest import admin_employee, api_headers
 
 
-def test_REFUND_001_employee_denied(admin_employee, client):
+def test_REFUND_001_employee_can_create_refund(admin_employee, client):
     admin = admin_employee["admin"]
     employee = admin_employee["employee"]
     latte = admin_employee["latte"]
@@ -30,7 +30,7 @@ def test_REFUND_001_employee_denied(admin_employee, client):
         headers=api_headers(employee),
         json={"payment_id": payment_id, "amount": "1.00", "reason": "Need"},
     )
-    assert resp.status_code == 403
+    assert resp.status_code == 201
 
 
 def test_REFUND_002_admin_updates_order(admin_employee, client):

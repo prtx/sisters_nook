@@ -26,6 +26,12 @@ def parse_items(raw_items: List[str]) -> List[tuple[str, int]]:
     return parsed
 
 
+from sisters_nook.web.auth_utils import hash_password
+
+
+DEFAULT_PASSWORD = "changeme"
+
+
 def seed_data():
     with get_session() as session:
         session.query(User).delete()
@@ -35,14 +41,14 @@ def seed_data():
             first_name="Admin",
             last_name="User",
             email="admin@sisters.local",
-            password_hash="secure-hash",
+            password_hash=hash_password(DEFAULT_PASSWORD),
             role=UserRole.ADMIN,
         )
         employee = User(
             first_name="Employee",
             last_name="User",
             email="employee@sisters.local",
-            password_hash="secure-hash",
+            password_hash=hash_password(DEFAULT_PASSWORD),
             role=UserRole.EMPLOYEE,
         )
         session.add_all([admin, employee])
@@ -52,6 +58,8 @@ def seed_data():
         menu_service.create_menu_item(admin, "Mocha", Decimal("5.00"), "Chocolate espresso", sort_order=2)
         menu_service.create_menu_item(admin, "Croissant", Decimal("3.25"), "Butter flake", sort_order=3)
         print("Seeded admin, employee, and default menu items.")
+        print(f"  admin@sisters.local / {DEFAULT_PASSWORD}")
+        print(f"  employee@sisters.local / {DEFAULT_PASSWORD}")
 
 
 def clean(args: argparse.Namespace):

@@ -62,12 +62,12 @@ def test_REFUND_001_admin_can_create_refund(refund_setup):
     assert refund.payment_id == payment.id
 
 
-def test_REFUND_002_employee_cannot_create_refund(refund_setup):
+def test_REFUND_002_employee_can_create_refund(refund_setup):
     refund_service = refund_setup["refund_service"]
     employee = refund_setup["employee"]
     payment = refund_setup["payment"]
-    with pytest.raises(PermissionError):
-        refund_service.create_refund(employee, payment.id, Decimal("1.00"), "Reason")
+    refund = refund_service.create_refund(employee, payment.id, Decimal("1.00"), "Reason")
+    assert refund.refunded_by_user_id == employee.id
 
 
 def test_REFUND_003_refund_belongs_to_payment(refund_setup):

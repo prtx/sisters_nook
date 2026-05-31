@@ -375,7 +375,7 @@ class PaymentService(BaseService):
 
 class RefundService(BaseService):
     def create_refund(self, actor: User, payment_id: str, amount: Decimal, reason: str) -> Refund:
-        _ensure_admin(actor)
+        _ensure_active(actor)
         payment = self.session.get(Payment, payment_id)
         if payment is None:
             raise ValueError("Payment not found.")
