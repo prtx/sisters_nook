@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Users | Sisters Nook{% endblock %}
+{% block page_title %}Users{% endblock %}
+{% block page_subtitle %}Admin-only user management{% endblock %}
+{% block content %}
+  <article class="card">
+    <div class="section-header">
+      <h2 class="section-title">User accounts</h2>
+      <a class="primary-button" href="{{ url_for('users.create_user') }}">Create user</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last login</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+          <tr>
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{% with value=user.role.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>{% with value="active" if user.is_active else "inactive" %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>{{ user.last_login_at.strftime("%Y-%m-%d %H:%M") if user.last_login_at else "-" }}</td>
+            <td class="button-row">
+              <a class="secondary-button" href="{{ url_for('users.edit_user', user_id=user.id) }}">Edit</a>
+              {% if user.is_active %}
+                <form method="post" action="{{ url_for('users.deactivate_user', user_id=user.id) }}">
+                  <button class="secondary-button" type="submit">Deactivate</button>
+                </form>
+              {% else %}
+                <form method="post" action="{{ url_for('users.reactivate_user', user_id=user.id) }}">
+                  <button class="secondary-button" type="submit">Reactivate</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No users found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+{% endblock %}

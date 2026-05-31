@@ -1,80 +1,89 @@
 {% extends "base.html" %}
+{% block title %}Dashboard | Sisters Nook{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Role-aware cafe operations overview{% endblock %}
 {% block content %}
-  <h1 class="mb-4">Dashboard</h1>
-  {% if is_admin %}
-    <div class="row g-3 mb-4">
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Today's Sales</h6><p class="fs-4 mb-0">${{ today_sales }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Open Orders</h6><p class="fs-4 mb-0">{{ order_counts.open }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Paid Orders</h6><p class="fs-4 mb-0">{{ order_counts.paid }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Refunded</h6><p class="fs-4 mb-0">{{ order_counts.refunded }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Active Menu</h6><p class="fs-4 mb-0">{{ active_menu_count }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Inactive Menu</h6><p class="fs-4 mb-0">{{ inactive_menu_count }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Users</h6><p class="fs-4 mb-0">{{ user_count }}</p></div></div></div>
-    </div>
-    <div class="mb-4">
-      <a href="{{ url_for('orders.create') }}" class="btn btn-primary me-2">Create Order</a>
-      <a href="{{ url_for('menu.create_menu') }}" class="btn btn-outline-primary me-2">Add Menu Item</a>
-      <a href="{{ url_for('orders.history') }}" class="btn btn-outline-secondary me-2">View Orders</a>
-      <a href="{{ url_for('users.list_users') }}" class="btn btn-outline-secondary me-2">Manage Users</a>
-      <a href="{{ url_for('refunds.list_refunds') }}" class="btn btn-outline-secondary">Refunds</a>
-    </div>
-    <div class="row g-4">
-      <div class="col-md-6">
-        <h4>Recent Orders</h4>
-        <ul class="list-group">
+  <section class="grid-cards">
+    <article class="card">
+      <div class="metric-label">Today sales</div>
+      <div class="metric-value">रु {{ "%.2f"|format(today_sales) }}</div>
+      <div class="metric-note">{{ payments_today }} payments logged</div>
+    </article>
+    <article class="card">
+      <div class="metric-label">Open orders</div>
+      <div class="metric-value">{{ open_orders }}</div>
+      <div class="metric-note">Waiting for payment</div>
+    </article>
+    <article class="card">
+      <div class="metric-label">Active items</div>
+      <div class="metric-value">{{ active_menu_count }}</div>
+      <div class="metric-note">Available to order</div>
+    </article>
+    <article class="card">
+      <div class="metric-label">Role view</div>
+      <div class="metric-value">{{ "Admin" if is_admin else "Employee" }}</div>
+      <div class="metric-note">Access updates by role</div>
+    </article>
+  </section>
+
+  <section class="two-column">
+    <article class="card">
+      <div class="section-header">
+        <h2 class="section-title">Recent orders</h2>
+        <a class="primary-button" href="{{ url_for('orders.create') }}">New order</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Order</th>
+            <th>Order name</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
           {% for order in recent_orders %}
-            <li class="list-group-item d-flex justify-content-between">
-              <a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.order_number }}</a>
-              <span class="badge bg-secondary">{{ order.status.value }}</span>
-            </li>
+            <tr>
+              <td><a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.order_number }}</a></td>
+              <td>{{ order.order_name or "-" }}</td>
+              <td>{% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+              <td>रु {{ "%.2f"|format(order.grand_total) }}</td>
+              <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td class="button-row">
+                <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>
+                {% if order.status.value == "open" %}
+                  <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+                {% endif %}
+              </td>
+            </tr>
           {% else %}
-            <li class="list-group-item text-muted">No orders yet.</li>
+            <tr><td colspan="6">No orders yet.</td></tr>
           {% endfor %}
-        </ul>
+          </tbody>
+        </table>
       </div>
-      <div class="col-md-6">
-        <h4>Recent Price Changes</h4>
-        <ul class="list-group">
-          {% for change in recent_price_changes %}
-            <li class="list-group-item">${{ change.old_price }} → ${{ change.new_price }} <small class="text-muted">{{ change.changed_at.strftime('%b %d %H:%M') }}</small></li>
-          {% else %}
-            <li class="list-group-item text-muted">No price changes.</li>
-          {% endfor %}
-        </ul>
+    </article>
+
+    <article class="card">
+      <h2 class="section-title">Quick stats</h2>
+      <div class="stack" style="margin-top: 10px;">
+        <div class="order-card"><strong>Orders paid today:</strong> {{ paid_today }}</div>
+        <div class="order-card"><strong>Inactive menu items:</strong> {{ inactive_menu_count }}</div>
+        {% if is_admin %}
+          <div class="order-card"><strong>Total users:</strong> {{ user_count }}</div>
+        {% endif %}
       </div>
-    </div>
-    {% if inactive_items %}
-      <div class="mt-4">
-        <h4>Inactive Menu Items</h4>
-        <ul class="list-group">
-          {% for item in inactive_items %}
-            <li class="list-group-item">{{ item.name }}</li>
-          {% endfor %}
-        </ul>
+      <div class="button-row" style="margin-top: 12px;">
+        <a class="secondary-button" href="{{ url_for('orders.history') }}">View order history</a>
+        {% if is_admin %}
+          <a class="secondary-button" href="{{ url_for('menu.list_menu') }}">Manage menu</a>
+          <a class="secondary-button" href="{{ url_for('users.list_users') }}">Manage users</a>
+          <a class="secondary-button" href="{{ url_for('audit.list_audit') }}">View audit log</a>
+        {% endif %}
       </div>
-    {% endif %}
-  {% else %}
-    <div class="row g-3 mb-4">
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Open Orders</h6><p class="fs-4 mb-0">{{ open_orders }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Paid Today</h6><p class="fs-4 mb-0">{{ paid_today }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Payments Today</h6><p class="fs-4 mb-0">{{ payments_today }}</p></div></div></div>
-      <div class="col-md-3"><div class="card"><div class="card-body"><h6>Active Menu</h6><p class="fs-4 mb-0">{{ active_menu_count }}</p></div></div></div>
-    </div>
-    <div class="mb-4">
-      <a href="{{ url_for('orders.create') }}" class="btn btn-primary me-2">Create Order</a>
-      <a href="{{ url_for('orders.history') }}" class="btn btn-outline-secondary me-2">Order History</a>
-      <a href="{{ url_for('menu.list_menu') }}" class="btn btn-outline-secondary">View Menu</a>
-    </div>
-    <h4>Recent Orders</h4>
-    <ul class="list-group">
-      {% for order in recent_orders %}
-        <li class="list-group-item d-flex justify-content-between">
-          <a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.order_number }}</a>
-          <span>${{ order.grand_total }}</span>
-        </li>
-      {% else %}
-        <li class="list-group-item text-muted">No orders yet.</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+    </article>
+  </section>
 {% endblock %}

@@ -252,6 +252,7 @@ class OrderService(BaseService):
         self,
         actor: User,
         line_items: Iterable[OrderLineRequest],
+        order_name: Optional[str] = None,
         tax_total: Decimal = Decimal("0.00"),
         discount_total: Decimal = Decimal("0.00"),
         tip_total: Decimal = Decimal("0.00"),
@@ -302,6 +303,7 @@ class OrderService(BaseService):
         grand_total = _normalize(subtotal + tax_total + tip_total - discount_total)
         order = Order(
             order_number=_order_number(),
+            order_name=order_name.strip() if order_name else None,
             created_by_user_id=actor.id,
             subtotal=subtotal,
             tax_total=tax_total,

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Create Order | Sisters Nook{% endblock %}
+{% block page_title %}Create Order{% endblock %}
+{% block page_subtitle %}Select active menu items and submit order{% endblock %}
+{% block content %}
+  <form id="createOrderForm" method="post" class="order-layout">
+    <article class="card">
+      <div class="section-header">
+        <h2 class="section-title">Active menu</h2>
+      </div>
+      <div class="menu-grid">
+        {% for item in menu_items %}
+          <div class="menu-card">
+            <div class="menu-card-top">
+              <div>
+                <strong>{{ item.name }}</strong>
+                <div class="metric-note">{{ item.description or "No description" }}</div>
+              </div>
+              <div class="price-chip">रु {{ "%.2f"|format(item.current_price) }}</div>
+            </div>
+            <div class="field" style="margin-top: 10px;">
+              <label for="qty_{{ item.id }}">Quantity</label>
+              <input
+                id="qty_{{ item.id }}"
+                name="qty_{{ item.id }}"
+                type="number"
+                min="0"
+                value="0"
+                data-price="{{ item.current_price }}"
+                data-qty-target="qty_{{ item.id }}"
+              >
+            </div>
+          </div>
+        {% else %}
+          <p>No active menu items available.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <aside class="card">
+      <h2 class="section-title">Order totals</h2>
+      <p id="orderFormError" class="metric-note" style="color: var(--error);"></p>
+      <div class="field">
+        <label for="order_name">Order name</label>
+        <input id="order_name" name="order_name" placeholder="e.g. Table 4 or John takeaway">
+      </div>
+      <div class="field">
+        <label for="tax_total">Tax</label>
+        <input id="tax_total" name="tax_total" type="number" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="field">
+        <label for="discount_total">Discount</label>
+        <input id="discount_total" name="discount_total" type="number" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="field">
+        <label for="tip_total">Tip</label>
+        <input id="tip_total" name="tip_total" type="number" min="0" step="0.01" value="0.00">
+      </div>
+      <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="3"></textarea>
+      </div>
+      <div class="totals-box">
+        <div class="total-row"><span>Subtotal</span><strong id="subtotalValue">रु 0.00</strong></div>
+        <div class="total-row"><span>Tax</span><strong id="taxValue">रु 0.00</strong></div>
+        <div class="total-row grand"><span>Total</span><strong id="totalValue">रु 0.00</strong></div>
+      </div>
+      <div class="button-grid" style="margin-top: 12px;">
+        <button class="primary-button" type="submit">Save order</button>
+        <a class="secondary-button" href="{{ url_for('orders.history') }}">Cancel</a>
+      </div>
+    </aside>
+  </form>
+{% endblock %}

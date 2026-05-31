@@ -1,23 +1,37 @@
 {% extends "base.html" %}
-{% block content %}
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h2 class="card-title mb-4">Sign In</h2>
-          <form method="post">
-            <div class="mb-3">
-              <label for="email" class="form-label">Email</label>
-              <input type="email" class="form-control" id="email" name="email" required />
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">Password</label>
-              <input type="password" class="form-control" id="password" name="password" required />
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Sign in</button>
-          </form>
+{% block title %}Login | Sisters Nook{% endblock %}
+{% block auth_content %}
+  <div class="login-page">
+    <section class="login-hero">
+      <div class="brand-row">
+        <div class="brand-mark">SN</div>
+        <div>
+          <div class="brand-title">Sisters Nook</div>
+          <div class="brand-subtitle">Cafe Content Management System</div>
         </div>
       </div>
-    </div>
+      <h2>One cafe. One menu. Clean records.</h2>
+      <p class="metric-note">Use your account to manage menu pricing, order entry, payments, refunds, users, and audit history.</p>
+      <div class="hero-pills">
+        <div class="hero-pill">Fast order entry</div>
+        <div class="hero-pill">Role based access</div>
+        <div class="hero-pill">Historical snapshots</div>
+      </div>
+    </section>
+    <section class="login-card">
+      <h2 class="section-title">Sign in</h2>
+      <p class="metric-note">Enter your Sisters Nook credentials</p>
+      <form method="post">
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="primary-button" type="submit">Sign in</button>
+      </form>
+    </section>
   </div>
 {% endblock %}

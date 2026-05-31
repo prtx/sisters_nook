@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import argparse
+import csv
 from decimal import Decimal
+from pathlib import Path
 from typing import List
 
 from .db import get_session, reset_database
-from .schema import Order, PaymentMethod, User, UserRole
+from .schema import MenuItem, Order, PaymentMethod, User, UserRole
 from .services import (
     MenuService,
     OrderLineRequest,
@@ -30,13 +32,33 @@ from sisters_nook.web.auth_utils import hash_password
 
 
 DEFAULT_PASSWORD = "changeme"
+SEED_MENU_FILE = Path(__file__).resolve().parent.parent / "seed_menu.csv"
+
+
+def load_seed_menu_rows(csv_path: Path) -> list[tuple[str, str | None, Decimal]]:
+    if not csv_path.exists():
+        raise FileNotFoundError(f"Seed file not found: {csv_path}")
+    rows: list[tuple[str, str | None, Decimal]] = []
+    with csv_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            name = (row.get("Item") or "").strip()
+            description = (row.get("Description") or "").strip() or None
+            price_raw = (row.get("Price (INR)") or "").strip()
+            if not name:
+                continue
+            if not price_raw:
+                raise ValueError(f"Missing price for item: {name}")
+            rows.append((name, description, Decimal(price_raw)))
+    if not rows:
+        raise ValueError(f"No menu rows found in {csv_path}")
+    return rows
 
 
 def seed_data():
+    reset_database()
     with get_session() as session:
-        session.query(User).delete()
-        session.commit()
-    with get_session() as session:
+        menu_rows = load_seed_menu_rows(SEED_MENU_FILE)
         admin = User(
             first_name="Admin",
             last_name="User",
@@ -54,10 +76,11 @@ def seed_data():
         session.add_all([admin, employee])
         session.flush()
         menu_service = MenuService(session)
-        menu_service.create_menu_item(admin, "Latte", Decimal("4.50"), "Milk and espresso", sort_order=1)
-        menu_service.create_menu_item(admin, "Mocha", Decimal("5.00"), "Chocolate espresso", sort_order=2)
-        menu_service.create_menu_item(admin, "Croissant", Decimal("3.25"), "Butter flake", sort_order=3)
-        print("Seeded admin, employee, and default menu items.")
+        for idx, (name, description, price) in enumerate(menu_rows, start=1):
+            menu_service.create_menu_item(admin, name, price, description, sort_order=idx)
+        session.flush()
+        menu_count = session.query(MenuItem).count()
+        print(f"Seeded admin, employee, and {menu_count} menu items from {SEED_MENU_FILE.name}.")
         print(f"  admin@sisters.local / {DEFAULT_PASSWORD}")
         print(f"  employee@sisters.local / {DEFAULT_PASSWORD}")
 

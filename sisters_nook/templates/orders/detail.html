@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.order_number }} | Sisters Nook{% endblock %}
+{% block page_title %}Order {{ order.order_number }}{% endblock %}
+{% block page_subtitle %}Order detail, payment history, and refund actions{% endblock %}
+{% block content %}
+  <section class="two-column">
+    <article class="card">
+      <h2 class="section-title">Order summary</h2>
+      <div class="stack">
+        <div class="order-card"><strong>Order name:</strong> {{ order.order_name or "-" }}</div>
+        <div class="order-card"><strong>Status:</strong> {% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</div>
+        <div class="order-card"><strong>Subtotal:</strong> रु {{ "%.2f"|format(order.subtotal) }}</div>
+        <div class="order-card"><strong>Tax:</strong> रु {{ "%.2f"|format(order.tax_total) }}</div>
+        <div class="order-card"><strong>Discount:</strong> रु {{ "%.2f"|format(order.discount_total) }}</div>
+        <div class="order-card"><strong>Tip:</strong> रु {{ "%.2f"|format(order.tip_total) }}</div>
+        <div class="order-card"><strong>Grand total:</strong> रु {{ "%.2f"|format(order.grand_total) }}</div>
+        {% if order.notes %}
+          <div class="order-card"><strong>Notes:</strong> {{ order.notes }}</div>
+        {% endif %}
+      </div>
+      <div class="button-row" style="margin-top: 12px;">
+        {% if order.status.value == "open" %}
+          <a class="primary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+          {% if is_admin %}
+            <form method="post" action="{{ url_for('orders.cancel', order_id=order.id) }}">
+              <button class="secondary-button" type="submit">Cancel order</button>
+            </form>
+          {% endif %}
+        {% endif %}
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="section-title">Order items</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Item</th>
+            <th>Unit price</th>
+            <th>Qty</th>
+            <th>Line total</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for line in order.order_items %}
+            <tr>
+              <td>{{ line.item_name_snapshot }}</td>
+              <td>रु {{ "%.2f"|format(line.unit_price_snapshot) }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>रु {{ "%.2f"|format(line.line_total) }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4">No items found for this order.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <article class="card">
+    <h2 class="section-title">Payments</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th>Amount</th>
+          <th>Created</th>
+          <th>Refunds</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for payment in order.payments %}
+          <tr>
+            <td>{{ payment.id[:8] }}</td>
+            <td>{{ payment.payment_method.value }}</td>
+            <td>{% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>रु {{ "%.2f"|format(payment.amount) }}</td>
+            <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td>
+              {% for refund in payment.refunds %}
+                <div>रु {{ "%.2f"|format(refund.amount) }} - {{ refund.created_at.strftime("%Y-%m-%d") }}</div>
+              {% else %}
+                <span class="metric-note">No refunds</span>
+              {% endfor %}
+            </td>
+            <td>
+              {% if payment.status.value in ["paid", "refunded"] %}
+                <a class="secondary-button" href="{{ url_for('refunds.create_refund', payment_id=payment.id) }}">Refund</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7">No payments logged for this order.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+{% endblock %}

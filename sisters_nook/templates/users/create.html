@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Create User | Sisters Nook{% endblock %}
+{% block page_title %}Create User{% endblock %}
+{% block page_subtitle %}Add employee or admin account{% endblock %}
+{% block content %}
+  <article class="card" style="max-width: 760px;">
+    <form method="post">
+      <div class="field">
+        <label for="first_name">First name</label>
+        <input id="first_name" name="first_name" required>
+      </div>
+      <div class="field">
+        <label for="last_name">Last name</label>
+        <input id="last_name" name="last_name" required>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required>
+      </div>
+      <div class="field">
+        <label for="role">Role</label>
+        <select id="role" name="role" required>
+          {% for role in roles %}
+            <option value="{{ role }}">{{ role|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="button-row">
+        <button class="primary-button" type="submit">Create user</button>
+        <a class="secondary-button" href="{{ url_for('users.list_users') }}">Cancel</a>
+      </div>
+    </form>
+  </article>
+{% endblock %}

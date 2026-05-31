@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Edit Menu Item | Sisters Nook{% endblock %}
+{% block page_title %}Edit Menu Item{% endblock %}
+{% block page_subtitle %}Update details and optionally change price{% endblock %}
+{% block content %}
+  <article class="card" style="max-width: 760px;">
+    <form method="post">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" value="{{ item.name }}" required>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3">{{ item.description or '' }}</textarea>
+      </div>
+      <div class="field">
+        <label for="sort_order">Display order</label>
+        <input id="sort_order" name="sort_order" type="number" min="0" step="1" value="{{ item.sort_order if item.sort_order is not none else '' }}">
+      </div>
+      <div class="field">
+        <label for="new_price">New price (optional)</label>
+        <input id="new_price" name="new_price" type="number" min="0" step="0.01">
+        <div class="metric-note">Current price: रु {{ "%.2f"|format(item.current_price) }}</div>
+      </div>
+      <div class="button-row">
+        <button class="primary-button" type="submit">Save changes</button>
+        <a class="secondary-button" href="{{ url_for('menu.price_history', item_id=item.id) }}">Price history</a>
+        <a class="secondary-button" href="{{ url_for('menu.list_menu') }}">Back</a>
+      </div>
+    </form>
+  </article>
+{% endblock %}

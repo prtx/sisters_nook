@@ -1,0 +1,2 @@
+{% set status = (value or "")|lower %}
+<span class="status status-{{ status|replace('_', '-') }}">{{ value }}</span>

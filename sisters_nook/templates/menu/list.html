@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Menu | Sisters Nook{% endblock %}
+{% block page_title %}Menu{% endblock %}
+{% block page_subtitle %}Active and inactive items with admin controls{% endblock %}
+{% block content %}
+  <article class="card">
+    <div class="section-header">
+      <h2 class="section-title">Menu items</h2>
+      {% if is_admin %}
+        <a class="primary-button" href="{{ url_for('menu.create_menu') }}">Add menu item</a>
+      {% endif %}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Sort</th>
+          {% if is_admin %}<th>Actions</th>{% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in menu_items %}
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.description or "-" }}</td>
+            <td>रु {{ "%.2f"|format(item.current_price) }}</td>
+            <td>{% with value="active" if item.is_active else "inactive" %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>{{ item.sort_order if item.sort_order is not none else "-" }}</td>
+            {% if is_admin %}
+              <td class="button-row">
+                <a class="secondary-button" href="{{ url_for('menu.edit_menu', item_id=item.id) }}">Edit</a>
+                <a class="secondary-button" href="{{ url_for('menu.price_history', item_id=item.id) }}">Price history</a>
+                {% if item.is_active %}
+                  <form method="post" action="{{ url_for('menu.deactivate', item_id=item.id) }}">
+                    <button class="secondary-button" type="submit">Deactivate</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('menu.reactivate', item_id=item.id) }}">
+                    <button class="secondary-button" type="submit">Reactivate</button>
+                  </form>
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% else %}
+          <tr><td colspan="{{ 6 if is_admin else 5 }}">No menu items found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+{% endblock %}

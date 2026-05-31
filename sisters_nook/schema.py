@@ -90,7 +90,7 @@ class MenuItem(Base):
     order_items = relationship("OrderItem", back_populates="menu_item")
 
     def __repr__(self) -> str:
-        return f"<MenuItem {self.name} (${self.current_price})>"
+        return f"<MenuItem {self.name} (रु {self.current_price})>"
 
 
 class MenuItemPriceHistory(Base):
@@ -114,6 +114,7 @@ class Order(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     order_number = Column(String, unique=True, nullable=False, index=True)
+    order_name = Column(String, nullable=True)
     created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     status = Column(SQLEnum(OrderStatus, name="order_status"), default=OrderStatus.OPEN, nullable=False)
     subtotal = Column(Numeric(10, 2), nullable=False)
@@ -169,7 +170,7 @@ class Payment(Base):
     order = relationship("Order", back_populates="payments")
 
     def __repr__(self) -> str:
-        return f"<Payment {self.id} ${self.amount}>"
+        return f"<Payment {self.id} रु {self.amount}>"
 
 
 class Refund(Base):
@@ -185,6 +186,6 @@ class Refund(Base):
     payment = relationship("Payment", back_populates="refunds")
 
     def __repr__(self) -> str:
-        return f"<Refund ${self.amount} for {self.payment_id}>"
+        return f"<Refund रु {self.amount} for {self.payment_id}>"
 
 

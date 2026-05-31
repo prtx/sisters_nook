@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Create Refund | Sisters Nook{% endblock %}
+{% block page_title %}Create Refund{% endblock %}
+{% block page_subtitle %}Issue refund for payment {{ payment.id[:8] }}{% endblock %}
+{% block content %}
+  <article class="card" style="max-width: 760px;">
+    <h2 class="section-title">Refund details</h2>
+    <div class="stack" style="margin-bottom: 12px;">
+      <div class="order-card"><strong>Order:</strong> {{ order_number }}</div>
+      <div class="order-card"><strong>Payment amount:</strong> रु {{ "%.2f"|format(payment.amount) }}</div>
+      <div class="order-card"><strong>Status:</strong> {% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</div>
+    </div>
+    <form method="post">
+      <div class="field">
+        <label for="amount">Refund amount</label>
+        <input id="amount" name="amount" type="number" min="0.01" step="0.01" required>
+      </div>
+      <div class="field">
+        <label for="reason">Refund reason</label>
+        <textarea id="reason" name="reason" rows="3" required></textarea>
+      </div>
+      <div class="button-row">
+        <button class="primary-button" type="submit">Confirm refund</button>
+        <a class="secondary-button" href="{{ url_for('orders.detail', order_id=payment.order_id) }}">Back to order</a>
+      </div>
+    </form>
+  </article>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Order History | Sisters Nook{% endblock %}
+{% block page_title %}Order History{% endblock %}
+{% block page_subtitle %}View, filter, and manage past orders{% endblock %}
+{% block content %}
+  <article class="card">
+    <div class="section-header">
+      <h2 class="section-title">Filters</h2>
+    </div>
+    <form method="get" class="filter-row">
+      <select name="status">
+        <option value="">All statuses</option>
+        {% for status in statuses %}
+          <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status|capitalize }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" name="date_from" value="{{ date_from }}">
+      <input type="date" name="date_to" value="{{ date_to }}">
+      <button class="{{ 'primary-button' if today_only else 'secondary-button' }}" type="submit" name="today" value="1">Today</button>
+      <button class="primary-button" type="submit">Apply</button>
+      <a class="secondary-button" href="{{ url_for('orders.history') }}">Reset</a>
+    </form>
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2 class="section-title">Orders</h2>
+      <a class="primary-button" href="{{ url_for('orders.create') }}">Create order</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Order</th>
+          <th>Order name</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in orders %}
+          <tr>
+            <td>{{ order.order_number }}</td>
+            <td>{{ order.order_name or "-" }}</td>
+            <td>{% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>रु {{ "%.2f"|format(order.grand_total) }}</td>
+            <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td class="button-row">
+              <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>
+              {% if order.status.value == "open" %}
+                <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No orders found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Create Menu Item | Sisters Nook{% endblock %}
+{% block page_title %}Add Menu Item{% endblock %}
+{% block page_subtitle %}Admin-only menu creation{% endblock %}
+{% block content %}
+  <article class="card" style="max-width: 760px;">
+    <form method="post">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" required>
+      </div>
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label for="price">Current price</label>
+        <input id="price" name="price" type="number" min="0" step="0.01" required>
+      </div>
+      <div class="field">
+        <label for="sort_order">Display order</label>
+        <input id="sort_order" name="sort_order" type="number" min="0" step="1">
+      </div>
+      <div class="button-row">
+        <button class="primary-button" type="submit">Create item</button>
+        <a class="secondary-button" href="{{ url_for('menu.list_menu') }}">Cancel</a>
+      </div>
+    </form>
+  </article>
+{% endblock %}
