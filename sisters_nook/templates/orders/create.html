@@ -18,17 +18,18 @@
               </div>
               <div class="price-chip">NRs {{ "%.2f"|format(item.current_price) }}</div>
             </div>
-            <div class="field" style="margin-top: 10px;">
-              <label for="qty_{{ item.id }}">Quantity</label>
-              <input
-                id="qty_{{ item.id }}"
-                name="qty_{{ item.id }}"
-                type="number"
-                min="0"
-                value="0"
-                data-price="{{ item.current_price }}"
-                data-qty-target="qty_{{ item.id }}"
-              >
+            <div
+              class="menu-qty-wrap"
+              data-price="{{ item.current_price }}"
+              data-qty-target="qty_{{ item.id }}"
+              style="margin-top: 8px;"
+            >
+              <input id="qty_{{ item.id }}" name="qty_{{ item.id }}" type="hidden" value="0">
+              <div class="qty-stepper" data-stepper>
+                <button class="qty-step-btn" type="button" data-minus-btn>-</button>
+                <span class="qty-value" data-qty-display>0</span>
+                <button class="qty-step-btn" type="button" data-plus-btn>+</button>
+              </div>
             </div>
           </div>
         {% else %}
@@ -46,15 +47,36 @@
       </div>
       <div class="field">
         <label for="tax_total">Tax</label>
-        <input id="tax_total" name="tax_total" type="number" min="0" step="0.01" value="0.00">
+        <div class="inline-adjust-row">
+          <select id="tax_type" name="tax_type" style="max-width: 120px;">
+            <option value="amount">Amount</option>
+            <option value="percent" selected>Percent</option>
+          </select>
+          <input id="tax_value" name="tax_value" type="number" min="0" step="0.01" value="0.00">
+        </div>
+        <input id="tax_total" name="tax_total" type="hidden" value="0.00">
       </div>
       <div class="field">
-        <label for="discount_total">Discount</label>
-        <input id="discount_total" name="discount_total" type="number" min="0" step="0.01" value="0.00">
+        <label for="discount_value">Discount</label>
+        <div class="inline-adjust-row">
+          <select id="discount_type" name="discount_type" style="max-width: 120px;">
+            <option value="amount">Amount</option>
+            <option value="percent" selected>Percent</option>
+          </select>
+          <input id="discount_value" name="discount_value" type="number" min="0" step="0.01" value="0.00">
+        </div>
+        <input id="discount_total" name="discount_total" type="hidden" value="0.00">
       </div>
       <div class="field">
-        <label for="tip_total">Tip</label>
-        <input id="tip_total" name="tip_total" type="number" min="0" step="0.01" value="0.00">
+        <label for="tip_value">Tip</label>
+        <div class="inline-adjust-row">
+          <select id="tip_type" name="tip_type" style="max-width: 120px;">
+            <option value="amount">Amount</option>
+            <option value="percent" selected>Percent</option>
+          </select>
+          <input id="tip_value" name="tip_value" type="number" min="0" step="0.01" value="0.00">
+        </div>
+        <input id="tip_total" name="tip_total" type="hidden" value="0.00">
       </div>
       <div class="field">
         <label for="notes">Notes</label>
@@ -62,6 +84,7 @@
       </div>
       <div class="totals-box">
         <div class="total-row"><span>Subtotal</span><strong id="subtotalValue">NRs 0.00</strong></div>
+        <div class="total-row" id="discountRow" hidden><span>Discount</span><strong id="discountAmountValue">NRs 0.00</strong></div>
         <div class="total-row"><span>Tax</span><strong id="taxValue">NRs 0.00</strong></div>
         <div class="total-row grand"><span>Total</span><strong id="totalValue">NRs 0.00</strong></div>
       </div>
