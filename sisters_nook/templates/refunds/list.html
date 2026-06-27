@@ -21,7 +21,7 @@
           <tr>
             <td>{{ refund.id[:8] }}</td>
             <td>{{ refund.payment_id[:8] }}</td>
-            <td>रु {{ "%.2f"|format(refund.amount) }}</td>
+            <td>NRs {{ "%.2f"|format(refund.amount) }}</td>
             <td>{{ refund.reason or "-" }}</td>
             <td>{{ user_emails.get(refund.refunded_by_user_id, "unknown") }}</td>
             <td>{{ refund.created_at.strftime("%Y-%m-%d %H:%M") }}</td>

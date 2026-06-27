@@ -23,8 +23,8 @@
           <tr>
             <td>{{ row.changed_at.strftime("%Y-%m-%d %H:%M") }}</td>
             <td>{{ user_emails.get(row.changed_by_user_id, "unknown") }}</td>
-            <td>{% if row.old_price is not none %}रु {{ "%.2f"|format(row.old_price) }}{% else %}-{% endif %}</td>
-            <td>रु {{ "%.2f"|format(row.new_price) }}</td>
+            <td>{% if row.old_price is not none %}NRs {{ "%.2f"|format(row.old_price) }}{% else %}-{% endif %}</td>
+            <td>NRs {{ "%.2f"|format(row.new_price) }}</td>
           </tr>
         {% else %}
           <tr><td colspan="4">No price change history yet.</td></tr>

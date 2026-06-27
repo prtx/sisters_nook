@@ -306,6 +306,30 @@ button {
   border: 1px solid var(--outline-variant);
 }
 
+.toggle-group {
+  display: inline-flex;
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.toggle-option {
+  padding: 9px 12px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--on-surface-variant);
+  border-right: 1px solid var(--outline-variant);
+}
+
+.toggle-option:last-child {
+  border-right: none;
+}
+
+.toggle-option.active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

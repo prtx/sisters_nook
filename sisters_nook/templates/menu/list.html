@@ -6,9 +6,25 @@
   <article class="card">
     <div class="section-header">
       <h2 class="section-title">Menu items</h2>
-      {% if is_admin %}
-        <a class="primary-button" href="{{ url_for('menu.create_menu') }}">Add menu item</a>
-      {% endif %}
+      <div class="button-row">
+        {% if is_admin %}
+          <div class="toggle-group" role="tablist" aria-label="Menu filter">
+            <a
+              class="toggle-option {{ 'active' if active_only else '' }}"
+              href="{{ url_for('menu.list_menu', active_only=1) }}"
+              role="tab"
+              aria-selected="{{ 'true' if active_only else 'false' }}"
+            >Active only</a>
+            <a
+              class="toggle-option {{ 'active' if not active_only else '' }}"
+              href="{{ url_for('menu.list_menu') }}"
+              role="tab"
+              aria-selected="{{ 'true' if not active_only else 'false' }}"
+            >Show all</a>
+          </div>
+          <a class="primary-button" href="{{ url_for('menu.create_menu') }}">Add menu item</a>
+        {% endif %}
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -27,7 +43,7 @@
           <tr>
             <td>{{ item.name }}</td>
             <td>{{ item.description or "-" }}</td>
-            <td>रु {{ "%.2f"|format(item.current_price) }}</td>
+            <td>NRs {{ "%.2f"|format(item.current_price) }}</td>
             <td>{% with value="active" if item.is_active else "inactive" %}{% include "partials/status_badge.html" %}{% endwith %}</td>
             <td>{{ item.sort_order if item.sort_order is not none else "-" }}</td>
             {% if is_admin %}

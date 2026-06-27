@@ -15,12 +15,17 @@ menu_bp = Blueprint("menu", __name__)
 @menu_bp.route("/menu")
 @login_required
 def list_menu():
+    active_only = request.args.get("active_only") in {"1", "true", "yes"}
     with get_session() as db_session:
         user = get_current_user(db_session)
         menu_service = MenuService(db_session)
         is_admin = user.role == UserRole.ADMIN
-        items = menu_service.list_all() if is_admin else menu_service.list_active()
-    return render_template("menu/list.html", menu_items=items, is_admin=is_admin)
+        if is_admin:
+            items = menu_service.list_active() if active_only else menu_service.list_all()
+        else:
+            items = menu_service.list_active()
+            active_only = True
+    return render_template("menu/list.html", menu_items=items, is_admin=is_admin, active_only=active_only)
 
 
 @menu_bp.route("/menu/new", methods=["GET", "POST"])

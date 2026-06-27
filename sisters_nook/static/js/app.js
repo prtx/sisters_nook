@@ -2,9 +2,9 @@
   function toMoney(value) {
     const n = Number(value || 0);
     if (Number.isNaN(n)) {
-      return "रु 0.00";
+      return "NRs 0.00";
     }
-    return `रु ${n.toFixed(2)}`;
+    return `NRs ${n.toFixed(2)}`;
   }
 
   function readNumber(inputId) {

@@ -45,7 +45,7 @@
             <td>{{ order.order_number }}</td>
             <td>{{ order.order_name or "-" }}</td>
             <td>{% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
-            <td>रु {{ "%.2f"|format(order.grand_total) }}</td>
+            <td>NRs {{ "%.2f"|format(order.grand_total) }}</td>
             <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
             <td class="button-row">
               <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>

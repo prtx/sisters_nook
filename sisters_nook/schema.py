@@ -90,7 +90,7 @@ class MenuItem(Base):
     order_items = relationship("OrderItem", back_populates="menu_item")
 
     def __repr__(self) -> str:
-        return f"<MenuItem {self.name} (रु {self.current_price})>"
+        return f"<MenuItem {self.name} (NRs {self.current_price})>"
 
 
 class MenuItemPriceHistory(Base):
@@ -170,7 +170,7 @@ class Payment(Base):
     order = relationship("Order", back_populates="payments")
 
     def __repr__(self) -> str:
-        return f"<Payment {self.id} रु {self.amount}>"
+        return f"<Payment {self.id} NRs {self.amount}>"
 
 
 class Refund(Base):
@@ -186,6 +186,6 @@ class Refund(Base):
     payment = relationship("Payment", back_populates="refunds")
 
     def __repr__(self) -> str:
-        return f"<Refund रु {self.amount} for {self.payment_id}>"
+        return f"<Refund NRs {self.amount} for {self.payment_id}>"
 
 

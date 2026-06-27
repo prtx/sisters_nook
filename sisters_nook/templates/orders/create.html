@@ -16,7 +16,7 @@
                 <strong>{{ item.name }}</strong>
                 <div class="metric-note">{{ item.description or "No description" }}</div>
               </div>
-              <div class="price-chip">रु {{ "%.2f"|format(item.current_price) }}</div>
+              <div class="price-chip">NRs {{ "%.2f"|format(item.current_price) }}</div>
             </div>
             <div class="field" style="margin-top: 10px;">
               <label for="qty_{{ item.id }}">Quantity</label>
@@ -61,9 +61,9 @@
         <textarea id="notes" name="notes" rows="3"></textarea>
       </div>
       <div class="totals-box">
-        <div class="total-row"><span>Subtotal</span><strong id="subtotalValue">रु 0.00</strong></div>
-        <div class="total-row"><span>Tax</span><strong id="taxValue">रु 0.00</strong></div>
-        <div class="total-row grand"><span>Total</span><strong id="totalValue">रु 0.00</strong></div>
+        <div class="total-row"><span>Subtotal</span><strong id="subtotalValue">NRs 0.00</strong></div>
+        <div class="total-row"><span>Tax</span><strong id="taxValue">NRs 0.00</strong></div>
+        <div class="total-row grand"><span>Total</span><strong id="totalValue">NRs 0.00</strong></div>
       </div>
       <div class="button-grid" style="margin-top: 12px;">
         <button class="primary-button" type="submit">Save order</button>

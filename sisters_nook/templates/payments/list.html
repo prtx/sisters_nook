@@ -38,7 +38,7 @@
             </td>
             <td>{{ payment.payment_method.value }}</td>
             <td>{% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
-            <td>रु {{ "%.2f"|format(payment.amount) }}</td>
+            <td>NRs {{ "%.2f"|format(payment.amount) }}</td>
             <td>{{ user_emails.get(payment.logged_by_user_id, "unknown") }}</td>
             <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
           </tr>

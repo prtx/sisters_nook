@@ -9,11 +9,11 @@
       <div class="stack">
         <div class="order-card"><strong>Order name:</strong> {{ order.order_name or "-" }}</div>
         <div class="order-card"><strong>Status:</strong> {% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</div>
-        <div class="order-card"><strong>Subtotal:</strong> रु {{ "%.2f"|format(order.subtotal) }}</div>
-        <div class="order-card"><strong>Tax:</strong> रु {{ "%.2f"|format(order.tax_total) }}</div>
-        <div class="order-card"><strong>Discount:</strong> रु {{ "%.2f"|format(order.discount_total) }}</div>
-        <div class="order-card"><strong>Tip:</strong> रु {{ "%.2f"|format(order.tip_total) }}</div>
-        <div class="order-card"><strong>Grand total:</strong> रु {{ "%.2f"|format(order.grand_total) }}</div>
+        <div class="order-card"><strong>Subtotal:</strong> NRs {{ "%.2f"|format(order.subtotal) }}</div>
+        <div class="order-card"><strong>Tax:</strong> NRs {{ "%.2f"|format(order.tax_total) }}</div>
+        <div class="order-card"><strong>Discount:</strong> NRs {{ "%.2f"|format(order.discount_total) }}</div>
+        <div class="order-card"><strong>Tip:</strong> NRs {{ "%.2f"|format(order.tip_total) }}</div>
+        <div class="order-card"><strong>Grand total:</strong> NRs {{ "%.2f"|format(order.grand_total) }}</div>
         {% if order.notes %}
           <div class="order-card"><strong>Notes:</strong> {{ order.notes }}</div>
         {% endif %}
@@ -46,9 +46,9 @@
           {% for line in order.order_items %}
             <tr>
               <td>{{ line.item_name_snapshot }}</td>
-              <td>रु {{ "%.2f"|format(line.unit_price_snapshot) }}</td>
+              <td>NRs {{ "%.2f"|format(line.unit_price_snapshot) }}</td>
               <td>{{ line.quantity }}</td>
-              <td>रु {{ "%.2f"|format(line.line_total) }}</td>
+              <td>NRs {{ "%.2f"|format(line.line_total) }}</td>
             </tr>
           {% else %}
             <tr><td colspan="4">No items found for this order.</td></tr>
@@ -80,11 +80,11 @@
             <td>{{ payment.id[:8] }}</td>
             <td>{{ payment.payment_method.value }}</td>
             <td>{% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
-            <td>रु {{ "%.2f"|format(payment.amount) }}</td>
+            <td>NRs {{ "%.2f"|format(payment.amount) }}</td>
             <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
             <td>
               {% for refund in payment.refunds %}
-                <div>रु {{ "%.2f"|format(refund.amount) }} - {{ refund.created_at.strftime("%Y-%m-%d") }}</div>
+                <div>NRs {{ "%.2f"|format(refund.amount) }} - {{ refund.created_at.strftime("%Y-%m-%d") }}</div>
               {% else %}
                 <span class="metric-note">No refunds</span>
               {% endfor %}

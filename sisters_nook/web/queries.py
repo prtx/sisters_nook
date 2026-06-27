@@ -124,7 +124,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
                 action="order_created",
                 target=order.order_number,
                 old_value="",
-                new_value=f"{order.status.value} (रु {order.grand_total})",
+                new_value=f"{order.status.value} (NRs {order.grand_total})",
             )
         )
         if order.paid_at:
@@ -158,7 +158,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
                 action="payment_logged",
                 target=payment.order.order_number if payment.order else payment.order_id,
                 old_value="",
-                new_value=f"{payment.status.value} रु {payment.amount} ({payment.payment_method.value})",
+                new_value=f"{payment.status.value} NRs {payment.amount} ({payment.payment_method.value})",
             )
         )
 
