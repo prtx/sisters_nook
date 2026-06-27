@@ -1,20 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Create Order | Sisters Nook{% endblock %}
-{% block page_title %}Create Order{% endblock %}
-{% block page_subtitle %}Select active menu items and submit order{% endblock %}
+{% block title %}{{ "Edit Order" if order else "Create Order" }} | Sisters Nook{% endblock %}
+{% block page_title %}{{ "Edit Order" if order else "Create Order" }}{% endblock %}
+{% block page_subtitle %}
+  {% if order %}
+    Update items and totals for {{ order.order_number }}
+  {% else %}
+    Select active menu items and submit order
+  {% endif %}
+{% endblock %}
 {% block content %}
-  <form id="createOrderForm" method="post" class="order-layout">
+  <form id="orderEntryForm" method="post" class="order-layout">
     <article class="card">
       <div class="section-header">
         <h2 class="section-title">Active menu</h2>
       </div>
       <div class="menu-grid">
         {% for item in menu_items %}
-          <div class="menu-card">
+          {% set qty = order_quantities.get(item.id, 0) if order_quantities is defined else 0 %}
+          <div class="menu-card{% if qty > 0 %} menu-card-selected{% endif %}">
             <div class="menu-card-top">
               <div>
                 <strong>{{ item.name }}</strong>
                 <div class="metric-note">{{ item.description or "No description" }}</div>
+                {% if not item.is_active %}
+                  <div class="metric-note">On order (inactive)</div>
+                {% endif %}
               </div>
               <div class="price-chip">NRs {{ "%.2f"|format(item.current_price) }}</div>
             </div>
@@ -24,10 +34,10 @@
               data-qty-target="qty_{{ item.id }}"
               style="margin-top: 8px;"
             >
-              <input id="qty_{{ item.id }}" name="qty_{{ item.id }}" type="hidden" value="0">
+              <input id="qty_{{ item.id }}" name="qty_{{ item.id }}" type="hidden" value="{{ qty }}">
               <div class="qty-stepper" data-stepper>
                 <button class="qty-step-btn" type="button" data-minus-btn>-</button>
-                <span class="qty-value" data-qty-display>0</span>
+                <span class="qty-value" data-qty-display>{{ qty }}</span>
                 <button class="qty-step-btn" type="button" data-plus-btn>+</button>
               </div>
             </div>
@@ -43,44 +53,44 @@
       <p id="orderFormError" class="metric-note" style="color: var(--error);"></p>
       <div class="field">
         <label for="order_name">Order name</label>
-        <input id="order_name" name="order_name" placeholder="e.g. Table 4 or John takeaway">
+        <input id="order_name" name="order_name" placeholder="e.g. Table 4 or John takeaway" value="{{ order.order_name or '' if order else '' }}">
       </div>
       <div class="field">
         <label for="tax_total">Tax</label>
         <div class="inline-adjust-row">
           <select id="tax_type" name="tax_type" style="max-width: 120px;">
-            <option value="amount">Amount</option>
-            <option value="percent" selected>Percent</option>
+            <option value="amount" {% if order %}selected{% endif %}>Amount</option>
+            <option value="percent" {% if not order %}selected{% endif %}>Percent</option>
           </select>
-          <input id="tax_value" name="tax_value" type="number" min="0" step="0.01" value="0.00">
+          <input id="tax_value" name="tax_value" type="number" min="0" step="0.01" value="{{ '%.2f'|format(order.tax_total) if order else '0.00' }}">
         </div>
-        <input id="tax_total" name="tax_total" type="hidden" value="0.00">
+        <input id="tax_total" name="tax_total" type="hidden" value="{{ '%.2f'|format(order.tax_total) if order else '0.00' }}">
       </div>
       <div class="field">
         <label for="discount_value">Discount</label>
         <div class="inline-adjust-row">
           <select id="discount_type" name="discount_type" style="max-width: 120px;">
-            <option value="amount">Amount</option>
-            <option value="percent" selected>Percent</option>
+            <option value="amount" {% if order %}selected{% endif %}>Amount</option>
+            <option value="percent" {% if not order %}selected{% endif %}>Percent</option>
           </select>
-          <input id="discount_value" name="discount_value" type="number" min="0" step="0.01" value="0.00">
+          <input id="discount_value" name="discount_value" type="number" min="0" step="0.01" value="{{ '%.2f'|format(order.discount_total) if order else '0.00' }}">
         </div>
-        <input id="discount_total" name="discount_total" type="hidden" value="0.00">
+        <input id="discount_total" name="discount_total" type="hidden" value="{{ '%.2f'|format(order.discount_total) if order else '0.00' }}">
       </div>
       <div class="field">
         <label for="tip_value">Tip</label>
         <div class="inline-adjust-row">
           <select id="tip_type" name="tip_type" style="max-width: 120px;">
-            <option value="amount">Amount</option>
-            <option value="percent" selected>Percent</option>
+            <option value="amount" {% if order %}selected{% endif %}>Amount</option>
+            <option value="percent" {% if not order %}selected{% endif %}>Percent</option>
           </select>
-          <input id="tip_value" name="tip_value" type="number" min="0" step="0.01" value="0.00">
+          <input id="tip_value" name="tip_value" type="number" min="0" step="0.01" value="{{ '%.2f'|format(order.tip_total) if order else '0.00' }}">
         </div>
-        <input id="tip_total" name="tip_total" type="hidden" value="0.00">
+        <input id="tip_total" name="tip_total" type="hidden" value="{{ '%.2f'|format(order.tip_total) if order else '0.00' }}">
       </div>
       <div class="field">
         <label for="notes">Notes</label>
-        <textarea id="notes" name="notes" rows="3"></textarea>
+        <textarea id="notes" name="notes" rows="3">{{ order.notes or '' if order else '' }}</textarea>
       </div>
       <div class="totals-box">
         <div class="total-row"><span>Subtotal</span><strong id="subtotalValue">NRs 0.00</strong></div>
@@ -89,8 +99,12 @@
         <div class="total-row grand"><span>Total</span><strong id="totalValue">NRs 0.00</strong></div>
       </div>
       <div class="button-grid" style="margin-top: 12px;">
-        <button class="primary-button" type="submit">Save order</button>
-        <a class="secondary-button" href="{{ url_for('orders.history') }}">Cancel</a>
+        <button class="primary-button" type="submit">{{ "Update order" if order else "Save order" }}</button>
+        {% if order %}
+          <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">Cancel</a>
+        {% else %}
+          <a class="secondary-button" href="{{ url_for('orders.history') }}">Cancel</a>
+        {% endif %}
       </div>
     </aside>
   </form>

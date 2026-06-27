@@ -20,7 +20,8 @@
       </div>
       <div class="button-row" style="margin-top: 12px;">
         {% if order.status.value == "open" %}
-          <a class="primary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+          <a class="primary-button" href="{{ url_for('orders.edit', order_id=order.id) }}">Edit order</a>
+          <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
           {% if is_admin %}
             <form method="post" action="{{ url_for('orders.cancel', order_id=order.id) }}">
               <button class="secondary-button" type="submit">Cancel order</button>

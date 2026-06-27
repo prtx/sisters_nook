@@ -112,3 +112,63 @@ def test_employee_can_create_refund(client):
     assert resp.status_code == 200
     assert b"Refund created" in resp.data
     assert b"Admin access required" not in resp.data
+
+
+def test_employee_can_edit_open_order(client):
+    client.post("/login", data={"email": "employee@sisters.local", "password": "changeme"})
+    session = SessionLocal()
+    from sisters_nook.schema import MenuItem, Order, OrderStatus
+
+    latte = session.query(MenuItem).filter_by(name="Latte").one()
+    session.close()
+
+    client.post(
+        "/orders/new",
+        data={
+            f"qty_{latte.id}": "1",
+            "order_name": "Table 2",
+            "tax_type": "amount",
+            "tax_value": "0.00",
+            "tax_total": "0.00",
+            "discount_type": "amount",
+            "discount_value": "0.00",
+            "discount_total": "0.00",
+            "tip_type": "amount",
+            "tip_value": "0.00",
+            "tip_total": "0.00",
+            "notes": "",
+        },
+        follow_redirects=True,
+    )
+
+    session = SessionLocal()
+    order = session.query(Order).filter_by(status=OrderStatus.OPEN, order_name="Table 2").one()
+    order_id = order.id
+    session.close()
+
+    edit_page = client.get(f"/orders/{order_id}/edit")
+    assert edit_page.status_code == 200
+    assert b"Update order" in edit_page.data
+
+    resp = client.post(
+        f"/orders/{order_id}/edit",
+        data={
+            f"qty_{latte.id}": "2",
+            "order_name": "Table 2 revised",
+            "tax_type": "amount",
+            "tax_value": "0.00",
+            "tax_total": "0.00",
+            "discount_type": "amount",
+            "discount_value": "0.00",
+            "discount_total": "0.00",
+            "tip_type": "amount",
+            "tip_value": "0.00",
+            "tip_total": "0.00",
+            "notes": "Extra cup",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"updated" in resp.data
+    assert b"Table 2 revised" in resp.data
+    assert b"NRs 9.00" in resp.data

@@ -8,7 +8,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sisters_nook.db import get_session
 from sqlalchemy.orm import selectinload
 
-from sisters_nook.schema import Order, OrderStatus, Payment, PaymentMethod, PaymentStatus, UserRole
+from sisters_nook.schema import MenuItem, Order, OrderStatus, Payment, PaymentMethod, PaymentStatus, UserRole
 from sisters_nook.services import MenuService, OrderLineRequest, OrderService, PaymentService
 from sisters_nook.web.auth_utils import admin_required, get_current_user, login_required
 
@@ -28,6 +28,29 @@ def _parse_line_items(form, menu_items) -> list[OrderLineRequest]:
     if not lines:
         raise ValueError("Orders must contain at least one item.")
     return lines
+
+
+def _menu_items_for_order(db_session, order: Order) -> list[MenuItem]:
+    items = {item.id: item for item in MenuService(db_session).list_active()}
+    for line in order.order_items:
+        if line.menu_item_id not in items:
+            menu_item = db_session.get(MenuItem, line.menu_item_id)
+            if menu_item is not None:
+                items[menu_item.id] = menu_item
+    return sorted(items.values(), key=lambda item: (item.sort_order if item.sort_order is not None else 9999, item.name.lower()))
+
+
+def _order_quantities(order: Order) -> dict[str, int]:
+    return {line.menu_item_id: line.quantity for line in order.order_items}
+
+
+def _order_form_values(form) -> tuple[str | None, Decimal, Decimal, Decimal, str | None]:
+    order_name = form.get("order_name", "").strip() or None
+    tax = Decimal(form.get("tax_total") or "0")
+    discount = Decimal(form.get("discount_total") or "0")
+    tip = Decimal(form.get("tip_total") or "0")
+    notes = form.get("notes") or None
+    return order_name, tax, discount, tip, notes
 
 
 @orders_bp.route("/orders")
@@ -75,11 +98,7 @@ def create():
         if request.method == "POST":
             try:
                 lines = _parse_line_items(request.form, menu_items)
-                order_name = request.form.get("order_name", "").strip() or None
-                tax = Decimal(request.form.get("tax_total") or "0")
-                discount = Decimal(request.form.get("discount_total") or "0")
-                tip = Decimal(request.form.get("tip_total") or "0")
-                notes = request.form.get("notes") or None
+                order_name, tax, discount, tip, notes = _order_form_values(request.form)
                 order = order_service.create_order(
                     user,
                     lines,
@@ -93,7 +112,61 @@ def create():
                 return redirect(url_for("orders.detail", order_id=order.id))
             except Exception as exc:
                 flash(str(exc), "danger")
-    return render_template("orders/create.html", menu_items=menu_items)
+    return render_template("orders/create.html", menu_items=menu_items, order=None)
+
+
+@orders_bp.route("/orders/<order_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit(order_id: str):
+    with get_session() as db_session:
+        user = get_current_user(db_session)
+        order = (
+            db_session.query(Order)
+            .options(selectinload(Order.order_items), selectinload(Order.payments))
+            .filter_by(id=order_id)
+            .one_or_none()
+        )
+        if order is None:
+            flash("Order not found.", "danger")
+            return redirect(url_for("orders.history"))
+        if order.status != OrderStatus.OPEN:
+            flash("Only open orders can be edited.", "warning")
+            return redirect(url_for("orders.detail", order_id=order_id))
+        if order.payments:
+            flash("Cannot edit an order after payments have been logged.", "warning")
+            return redirect(url_for("orders.detail", order_id=order_id))
+        menu_items = _menu_items_for_order(db_session, order)
+        order_service = OrderService(db_session)
+        if request.method == "POST":
+            try:
+                lines = _parse_line_items(request.form, menu_items)
+                order_name, tax, discount, tip, notes = _order_form_values(request.form)
+                order_service.update_order(
+                    user,
+                    order_id,
+                    lines,
+                    order_name=order_name,
+                    tax_total=tax,
+                    discount_total=discount,
+                    tip_total=tip,
+                    notes=notes,
+                )
+                flash(f"Order {order.order_number} updated.", "success")
+                return redirect(url_for("orders.detail", order_id=order_id))
+            except Exception as exc:
+                flash(str(exc), "danger")
+        order = (
+            db_session.query(Order)
+            .options(selectinload(Order.order_items))
+            .filter_by(id=order_id)
+            .one()
+        )
+    return render_template(
+        "orders/create.html",
+        menu_items=menu_items,
+        order=order,
+        order_quantities=_order_quantities(order),
+    )
 
 
 @orders_bp.route("/orders/<order_id>")

@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 
 from sisters_nook.db import SessionLocal, reset_database
-from sisters_nook.schema import Order, OrderItem, OrderStatus, User, UserRole
+from sisters_nook.schema import Order, OrderItem, OrderStatus, PaymentStatus, User, UserRole
 from sisters_nook.services import MenuService, OrderLineRequest, OrderService, UserService
 
 
@@ -137,9 +137,53 @@ def test_ORDER_013_records_timestamps(order_setup):
     assert order.created_at <= datetime.utcnow()
 
 
-def test_ORDER_015_orders_not_deleted(order_setup):
+def test_ORDER_016_open_orders_can_be_updated(order_setup):
+    order_service: OrderService = order_setup["order_service"]
+    admin = order_setup["admin"]
+    latte = order_setup["latte"]
+    mocha = order_setup["mocha"]
+    order = order_service.create_order(
+        admin,
+        [OrderLineRequest(latte.id, 1)],
+        order_name="Table 1",
+        tax_total=Decimal("0.50"),
+    )
+    updated = order_service.update_order(
+        admin,
+        order.id,
+        [OrderLineRequest(latte.id, 2), OrderLineRequest(mocha.id, 1)],
+        order_name="Table 1 updated",
+        tax_total=Decimal("1.00"),
+        notes="Extra hot",
+    )
+    assert updated.status == OrderStatus.OPEN
+    assert updated.order_name == "Table 1 updated"
+    assert updated.notes == "Extra hot"
+    assert len(updated.order_items) == 2
+    assert updated.grand_total == Decimal("15.00")
+
+
+def test_ORDER_017_paid_orders_cannot_be_updated(order_setup):
     order_service: OrderService = order_setup["order_service"]
     admin = order_setup["admin"]
     latte = order_setup["latte"]
     order = order_service.create_order(admin, [OrderLineRequest(latte.id, 1)])
-    assert order_setup["session"].query(Order).filter_by(id=order.id).one_or_none() is not None
+    order.status = OrderStatus.PAID
+    order_setup["session"].add(order)
+    order_setup["session"].flush()
+    with pytest.raises(ValueError, match="Only open orders"):
+        order_service.update_order(admin, order.id, [OrderLineRequest(latte.id, 2)])
+
+
+def test_ORDER_018_orders_with_payments_cannot_be_updated(order_setup):
+    from sisters_nook.services import PaymentService
+    from sisters_nook.schema import PaymentMethod
+
+    order_service: OrderService = order_setup["order_service"]
+    payment_service = PaymentService(order_setup["session"])
+    admin = order_setup["admin"]
+    latte = order_setup["latte"]
+    order = order_service.create_order(admin, [OrderLineRequest(latte.id, 1)])
+    payment_service.log_payment(admin, order.id, Decimal("1.00"), PaymentMethod.CASH, status=PaymentStatus.PENDING)
+    with pytest.raises(ValueError, match="payments have been logged"):
+        order_service.update_order(admin, order.id, [OrderLineRequest(latte.id, 2)])

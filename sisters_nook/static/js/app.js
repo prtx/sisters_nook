@@ -110,8 +110,8 @@
     });
   }
 
-  function bindOrderCreate() {
-    const form = document.getElementById("createOrderForm");
+  function bindOrderEntry() {
+    const form = document.getElementById("orderEntryForm");
     if (!form) return;
 
     bindMenuQuantitySteppers(form);
@@ -158,6 +158,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    bindOrderCreate();
+    bindOrderEntry();
   });
 })();

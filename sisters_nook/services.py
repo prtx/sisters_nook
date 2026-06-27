@@ -248,17 +248,11 @@ class MenuService(BaseService):
 
 
 class OrderService(BaseService):
-    def create_order(
+    def _build_line_items(
         self,
-        actor: User,
         line_items: Iterable[OrderLineRequest],
-        order_name: Optional[str] = None,
-        tax_total: Decimal = Decimal("0.00"),
-        discount_total: Decimal = Decimal("0.00"),
-        tip_total: Decimal = Decimal("0.00"),
-        notes: Optional[str] = None,
-    ) -> Order:
-        _ensure_active(actor)
+        allow_inactive_ids: Optional[set[str]] = None,
+    ) -> tuple[List[OrderItem], Decimal]:
         requested = list(line_items)
         if not requested:
             raise ValueError("Orders must contain at least one item.")
@@ -277,7 +271,9 @@ class OrderService(BaseService):
             if menu_item is None:
                 raise ValueError("Menu item not found.")
             if not menu_item.is_active:
-                raise ValueError("Inactive items cannot be added to orders.")
+                allowed = allow_inactive_ids is not None and menu_item.id in allow_inactive_ids
+                if not allowed:
+                    raise ValueError("Inactive items cannot be added to orders.")
             if line.quantity <= 0:
                 raise ValueError("Quantity must be positive.")
             unit_price = _normalize(menu_item.current_price)
@@ -293,6 +289,18 @@ class OrderService(BaseService):
                     created_at=now,
                 )
             )
+        return order_items, subtotal
+
+    def _apply_order_totals(
+        self,
+        order: Order,
+        subtotal: Decimal,
+        order_name: Optional[str],
+        tax_total: Decimal,
+        discount_total: Decimal,
+        tip_total: Decimal,
+        notes: Optional[str],
+    ) -> None:
         if any(val < Decimal("0.00") for val in (tax_total, discount_total, tip_total)):
             raise ValueError("Taxes, discounts, and tips must be non-negative.")
         tax_total = _normalize(tax_total)
@@ -300,18 +308,40 @@ class OrderService(BaseService):
         tip_total = _normalize(tip_total)
         if discount_total > subtotal:
             raise ValueError("Discount cannot exceed the subtotal.")
-        grand_total = _normalize(subtotal + tax_total + tip_total - discount_total)
+        order.order_name = order_name.strip() if order_name else None
+        order.subtotal = subtotal
+        order.tax_total = tax_total
+        order.discount_total = discount_total
+        order.tip_total = tip_total
+        order.grand_total = _normalize(subtotal + tax_total + tip_total - discount_total)
+        order.notes = notes
+
+    def create_order(
+        self,
+        actor: User,
+        line_items: Iterable[OrderLineRequest],
+        order_name: Optional[str] = None,
+        tax_total: Decimal = Decimal("0.00"),
+        discount_total: Decimal = Decimal("0.00"),
+        tip_total: Decimal = Decimal("0.00"),
+        notes: Optional[str] = None,
+    ) -> Order:
+        _ensure_active(actor)
+        order_items, subtotal = self._build_line_items(line_items)
+        now = _now()
         order = Order(
             order_number=_order_number(),
-            order_name=order_name.strip() if order_name else None,
             created_by_user_id=actor.id,
-            subtotal=subtotal,
-            tax_total=tax_total,
-            discount_total=discount_total,
-            tip_total=tip_total,
-            grand_total=grand_total,
-            notes=notes,
             created_at=now,
+        )
+        self._apply_order_totals(
+            order,
+            subtotal,
+            order_name,
+            tax_total,
+            discount_total,
+            tip_total,
+            notes,
         )
         self.session.add(order)
         self.session.flush()
@@ -319,6 +349,47 @@ class OrderService(BaseService):
             item.order_id = order.id
             self.session.add(item)
         self.session.flush()
+        return order
+
+    def update_order(
+        self,
+        actor: User,
+        order_id: str,
+        line_items: Iterable[OrderLineRequest],
+        order_name: Optional[str] = None,
+        tax_total: Decimal = Decimal("0.00"),
+        discount_total: Decimal = Decimal("0.00"),
+        tip_total: Decimal = Decimal("0.00"),
+        notes: Optional[str] = None,
+    ) -> Order:
+        _ensure_active(actor)
+        order = self.session.get(Order, order_id)
+        if order is None:
+            raise ValueError("Order not found.")
+        if order.status != OrderStatus.OPEN:
+            raise ValueError("Only open orders can be edited.")
+        if order.payments:
+            raise ValueError("Cannot edit an order after payments have been logged.")
+        existing_menu_ids = {line.menu_item_id for line in order.order_items}
+        order_items, subtotal = self._build_line_items(line_items, allow_inactive_ids=existing_menu_ids)
+        for item in list(order.order_items):
+            self.session.delete(item)
+        self._apply_order_totals(
+            order,
+            subtotal,
+            order_name,
+            tax_total,
+            discount_total,
+            tip_total,
+            notes,
+        )
+        self.session.add(order)
+        self.session.flush()
+        for item in order_items:
+            item.order_id = order.id
+            self.session.add(item)
+        self.session.flush()
+        self.session.refresh(order)
         return order
 
     def cancel_order(self, actor: User, order_id: str) -> Order:

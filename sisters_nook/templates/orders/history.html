@@ -50,6 +50,7 @@
             <td class="button-row">
               <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>
               {% if order.status.value == "open" %}
+                <a class="secondary-button" href="{{ url_for('orders.edit', order_id=order.id) }}">Edit</a>
                 <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
               {% endif %}
             </td>
