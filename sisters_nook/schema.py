@@ -44,7 +44,17 @@ class PaymentMethod(Enum):
     CASH = "cash"
     CARD = "card"
     ONLINE = "online"
+    QR_CODE = "qr_code"
     OTHER = "other"
+
+
+PAYMENT_METHOD_LABELS = {
+    PaymentMethod.CASH.value: "Cash",
+    PaymentMethod.CARD.value: "Card",
+    PaymentMethod.ONLINE.value: "Online",
+    PaymentMethod.QR_CODE.value: "QR code",
+    PaymentMethod.OTHER.value: "Other",
+}
 
 
 class PaymentStatus(Enum):
@@ -163,6 +173,7 @@ class Payment(Base):
     status = Column(SQLEnum(PaymentStatus, name="payment_status"), default=PaymentStatus.PAID, nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     provider_reference = Column(String, nullable=True)
+    note = Column(Text, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=current_time, nullable=False)
 

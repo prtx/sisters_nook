@@ -345,6 +345,7 @@ class PaymentService(BaseService):
         amount: Decimal,
         method: PaymentMethod,
         provider_reference: Optional[str] = None,
+        note: Optional[str] = None,
         status: PaymentStatus = PaymentStatus.PAID,
     ) -> Payment:
         _ensure_active(actor)
@@ -362,6 +363,7 @@ class PaymentService(BaseService):
             payment_method=method,
             amount=amount,
             provider_reference=provider_reference,
+            note=note,
             status=status,
             paid_at=_now() if status == PaymentStatus.PAID else None,
             created_at=_now(),

@@ -15,6 +15,7 @@ from sisters_nook.routes.payments import payments_bp
 from sisters_nook.routes.refunds import refunds_bp
 from sisters_nook.routes.users import users_bp
 from sisters_nook.schema import UserRole
+from sisters_nook.schema import PAYMENT_METHOD_LABELS
 from sisters_nook.web.auth_utils import get_current_user
 
 
@@ -36,12 +37,12 @@ def create_app() -> Flask:
     def inject_user():
         user_id = session.get("user_id")
         if not user_id:
-            return {"current_user": None, "is_admin": False}
+            return {"current_user": None, "is_admin": False, "payment_method_labels": PAYMENT_METHOD_LABELS}
         with get_session() as db_session:
             user = get_current_user(db_session)
             if user is None:
-                return {"current_user": None, "is_admin": False}
-            return {"current_user": user, "is_admin": user.role == UserRole.ADMIN}
+                return {"current_user": None, "is_admin": False, "payment_method_labels": PAYMENT_METHOD_LABELS}
+            return {"current_user": user, "is_admin": user.role == UserRole.ADMIN, "payment_method_labels": PAYMENT_METHOD_LABELS}
 
     return app
 

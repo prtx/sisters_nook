@@ -3,6 +3,45 @@
 {% block page_title %}Audit Log{% endblock %}
 {% block page_subtitle %}Important system actions{% endblock %}
 {% block content %}
+  <article class="card audit-filter-card">
+    <div class="section-header audit-filter-header">
+      <h2 class="section-title">Filters</h2>
+      <p class="metric-note audit-filter-meta">Showing {{ filtered_count }} of {{ total_count }} events</p>
+    </div>
+    <form method="get" class="audit-filter-form">
+      <div class="audit-filter-grid">
+        <select name="category" aria-label="Type">
+          <option value="">All types</option>
+          {% for value, label in categories %}
+            <option value="{{ value }}" {% if category_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="action" aria-label="Action">
+          <option value="">All actions</option>
+          {% for action in actions %}
+            <option value="{{ action }}" {% if action_filter == action %}selected{% endif %}>{{ action_labels[action] }}</option>
+          {% endfor %}
+        </select>
+        <select name="user" aria-label="User">
+          <option value="">All users</option>
+          {% for email in user_emails %}
+            <option value="{{ email }}" {% if user_filter == email %}selected{% endif %}>{{ email }}</option>
+          {% endfor %}
+        </select>
+        <input type="date" name="date_from" value="{{ date_from }}" aria-label="From date">
+        <input type="date" name="date_to" value="{{ date_to }}" aria-label="To date">
+      </div>
+      <div class="audit-filter-actions-row">
+        <input type="search" name="q" value="{{ search_query }}" placeholder="Search target or details" aria-label="Search">
+        <div class="audit-filter-buttons">
+          <button class="{{ 'primary-button' if today_only else 'secondary-button' }}" type="submit" name="today" value="1">Today</button>
+          <button class="primary-button" type="submit">Apply</button>
+          <a class="secondary-button" href="{{ url_for('audit.list_audit') }}">Reset</a>
+        </div>
+      </div>
+    </form>
+  </article>
+
   <article class="card">
     <p class="metric-note">Includes key actions from both admins and employees.</p>
     <div class="table-wrap">
@@ -22,7 +61,7 @@
           <tr>
             <td>{{ event.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
             <td>{{ event.user_email }}</td>
-            <td>{{ event.action }}</td>
+            <td>{{ action_labels.get(event.action, event.action) }}</td>
             <td>{{ event.target }}</td>
             <td>{{ event.old_value or "-" }}</td>
             <td>{{ event.new_value or "-" }}</td>

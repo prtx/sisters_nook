@@ -146,6 +146,7 @@ a {
   padding: 22px;
   display: grid;
   gap: 18px;
+  align-content: start;
 }
 
 .card {
@@ -440,8 +441,97 @@ label {
   flex: 0 0 120px;
 }
 
-.inline-adjust-row input {
-  flex: 1 1 auto;
+.filter-row input[type="search"] {
+  width: auto;
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+.audit-filter-card {
+  padding: 12px 14px;
+  align-self: start;
+  height: fit-content;
+}
+
+.audit-filter-header {
+  margin-bottom: 8px;
+  align-items: baseline;
+}
+
+.audit-filter-meta {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.audit-filter-form {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.audit-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.audit-filter-actions-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.audit-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.audit-filter-form select,
+.audit-filter-form input[type="date"],
+.audit-filter-form input[type="search"] {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+  min-height: 32px;
+  border-radius: 8px;
+}
+
+.audit-filter-form .primary-button,
+.audit-filter-form .secondary-button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .audit-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .audit-filter-actions-row {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-filter-buttons {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .audit-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-filter-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 
 .status {

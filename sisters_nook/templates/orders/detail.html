@@ -69,6 +69,7 @@
           <th>Method</th>
           <th>Status</th>
           <th>Amount</th>
+          <th>Note</th>
           <th>Created</th>
           <th>Refunds</th>
           <th>Actions</th>
@@ -78,9 +79,10 @@
         {% for payment in order.payments %}
           <tr>
             <td>{{ payment.id[:8] }}</td>
-            <td>{{ payment.payment_method.value }}</td>
+            <td>{{ payment_method_labels.get(payment.payment_method.value, payment.payment_method.value) }}</td>
             <td>{% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
             <td>NRs {{ "%.2f"|format(payment.amount) }}</td>
+            <td>{{ payment.note or "-" }}</td>
             <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
             <td>
               {% for refund in payment.refunds %}
@@ -96,7 +98,7 @@
             </td>
           </tr>
         {% else %}
-          <tr><td colspan="7">No payments logged for this order.</td></tr>
+          <tr><td colspan="8">No payments logged for this order.</td></tr>
         {% endfor %}
         </tbody>
       </table>

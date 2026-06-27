@@ -131,7 +131,10 @@ def payment(order_id: str):
                 amount = Decimal(request.form.get("amount", "0"))
                 method = PaymentMethod(request.form.get("method", PaymentMethod.CASH.value))
                 status = PaymentStatus(request.form.get("status", PaymentStatus.PAID.value))
-                PaymentService(db_session).log_payment(user, order_id, amount, method, status=status)
+                note = request.form.get("note") or None
+                PaymentService(db_session).log_payment(
+                    user, order_id, amount, method, note=note, status=status
+                )
                 flash("Payment logged.", "success")
                 return redirect(url_for("orders.detail", order_id=order_id))
             except Exception as exc:

@@ -8,7 +8,7 @@
       <select name="method">
         <option value="">All methods</option>
         {% for method in methods %}
-          <option value="{{ method }}" {% if method_filter == method %}selected{% endif %}>{{ method|capitalize }}</option>
+          <option value="{{ method }}" {% if method_filter == method %}selected{% endif %}>{{ payment_method_labels.get(method, method) }}</option>
         {% endfor %}
       </select>
       <button class="primary-button" type="submit">Apply</button>
@@ -22,6 +22,7 @@
           <th>Method</th>
           <th>Status</th>
           <th>Amount</th>
+          <th>Note</th>
           <th>Logged by</th>
           <th>Created</th>
         </tr>
@@ -36,14 +37,15 @@
                 {{ payment.order_id }}
               {% endif %}
             </td>
-            <td>{{ payment.payment_method.value }}</td>
+            <td>{{ payment_method_labels.get(payment.payment_method.value, payment.payment_method.value) }}</td>
             <td>{% with value=payment.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
             <td>NRs {{ "%.2f"|format(payment.amount) }}</td>
+            <td>{{ payment.note or "-" }}</td>
             <td>{{ user_emails.get(payment.logged_by_user_id, "unknown") }}</td>
             <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
           </tr>
         {% else %}
-          <tr><td colspan="6">No payments found.</td></tr>
+          <tr><td colspan="7">No payments found.</td></tr>
         {% endfor %}
         </tbody>
       </table>

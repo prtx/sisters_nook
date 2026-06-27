@@ -15,9 +15,13 @@
         <label for="method">Payment method</label>
         <select id="method" name="method" required>
           {% for method in methods %}
-            <option value="{{ method }}">{{ method|capitalize }}</option>
+            <option value="{{ method }}">{{ payment_method_labels.get(method, method) }}</option>
           {% endfor %}
         </select>
+      </div>
+      <div class="field">
+        <label for="note">Note</label>
+        <textarea id="note" name="note" rows="2" placeholder="Optional payment note"></textarea>
       </div>
       <div class="field">
         <label for="status">Payment status</label>

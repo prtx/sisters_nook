@@ -320,6 +320,7 @@ def log_payment():
             payload["order_id"],
             Decimal(payload["amount"]),
             PaymentMethod(payload["method"]),
+            note=payload.get("note"),
             status=PaymentStatus(payload.get("status", PaymentStatus.PAID.value)),
         )
 

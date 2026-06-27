@@ -120,7 +120,8 @@ def log_payment(args: argparse.Namespace):
         if order is None:
             raise ValueError("Order not found.")
         method = PaymentMethod[args.method.upper()]
-        payment = payment_service.log_payment(actor, order.id, Decimal(args.amount), method)
+        note = args.note or None
+        payment = payment_service.log_payment(actor, order.id, Decimal(args.amount), method, note=note)
         print(f"Logged payment {payment.id} for order {order.order_number}")
 
 
@@ -151,6 +152,7 @@ def main():
     payment_parser.add_argument("--order-number", required=True)
     payment_parser.add_argument("--amount", required=True)
     payment_parser.add_argument("--method", choices=[m.name.lower() for m in PaymentMethod], required=True)
+    payment_parser.add_argument("--note", default=None)
 
     refund_parser = subparsers.add_parser("create-refund", help="Create refund for payment.")
     refund_parser.add_argument("--actor-email", required=True)
