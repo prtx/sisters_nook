@@ -5,7 +5,7 @@ from decimal import Decimal
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from sisters_nook.db import get_session
-from sisters_nook.schema import Payment, Refund, User
+from sisters_nook.schema import Payment, Refund, User, UserRole
 from sisters_nook.services import RefundService
 from sisters_nook.web.auth_utils import admin_required, employee_or_admin_required, get_current_user, login_required
 
@@ -34,7 +34,7 @@ def create_refund(payment_id: str):
         payment = db_session.get(Payment, payment_id)
         if payment is None:
             flash("Payment not found.", "danger")
-            return redirect(url_for("refunds.list_refunds"))
+            return redirect(url_for("orders.history"))
         order_number = payment.order.order_number if payment.order else payment.order_id
         if request.method == "POST":
             try:
@@ -42,7 +42,9 @@ def create_refund(payment_id: str):
                 reason = request.form.get("reason", "").strip()
                 RefundService(db_session).create_refund(user, payment_id, amount, reason)
                 flash("Refund created.", "success")
-                return redirect(url_for("refunds.list_refunds"))
+                if user.role == UserRole.ADMIN:
+                    return redirect(url_for("refunds.list_refunds"))
+                return redirect(url_for("orders.detail", order_id=payment.order_id))
             except Exception as exc:
                 flash(str(exc), "danger")
     return render_template("refunds/create.html", payment=payment, order_number=order_number)

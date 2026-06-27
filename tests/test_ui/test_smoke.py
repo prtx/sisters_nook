@@ -96,3 +96,19 @@ def test_employee_can_open_refund_form(client):
     resp = client.get(f"/payments/{payment.id}/refund")
     assert resp.status_code == 200
     assert b"Refund amount" in resp.data
+
+
+def test_employee_can_create_refund(client):
+    client.post("/login", data={"email": "employee@sisters.local", "password": "changeme"})
+    session = SessionLocal()
+    payment = session.query(Payment).first()
+    session.close()
+    assert payment is not None
+    resp = client.post(
+        f"/payments/{payment.id}/refund",
+        data={"amount": "4.50", "reason": "Wrong item"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    assert b"Refund created" in resp.data
+    assert b"Admin access required" not in resp.data
