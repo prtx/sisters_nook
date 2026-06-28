@@ -491,7 +491,9 @@ label {
 
 .audit-filter-form select,
 .audit-filter-form input[type="date"],
-.audit-filter-form input[type="search"] {
+.audit-filter-form input[type="search"],
+.order-filter-form select,
+.order-filter-form input[type="date"] {
   width: 100%;
   min-width: 0;
   padding: 6px 8px;
@@ -500,8 +502,17 @@ label {
   border-radius: 8px;
 }
 
+.order-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
 .audit-filter-form .primary-button,
-.audit-filter-form .secondary-button {
+.audit-filter-form .secondary-button,
+.order-filter-form .primary-button,
+.order-filter-form .secondary-button {
   padding: 6px 10px;
   font-size: 13px;
   border-radius: 8px;
@@ -511,6 +522,15 @@ label {
 @media (max-width: 900px) {
   .audit-filter-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .order-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .order-filter-grid .audit-filter-buttons {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 
   .audit-filter-actions-row {
@@ -524,6 +544,10 @@ label {
 
 @media (max-width: 520px) {
   .audit-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-filter-grid {
     grid-template-columns: 1fr;
   }
 

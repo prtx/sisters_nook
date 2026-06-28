@@ -75,10 +75,13 @@ def history():
             end = datetime.fromisoformat(date_to)
             query = query.filter(Order.created_at <= end.replace(hour=23, minute=59, second=59))
         orders = query.all()
+        total_count = db_session.query(Order).count()
         is_admin = user.role == UserRole.ADMIN
     return render_template(
         "orders/history.html",
         orders=orders,
+        filtered_count=len(orders),
+        total_count=total_count,
         is_admin=is_admin,
         status_filter=status_filter or "",
         date_from=date_from or "",

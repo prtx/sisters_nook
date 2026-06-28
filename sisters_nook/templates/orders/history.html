@@ -3,22 +3,27 @@
 {% block page_title %}Order History{% endblock %}
 {% block page_subtitle %}View, filter, and manage past orders{% endblock %}
 {% block content %}
-  <article class="card">
-    <div class="section-header">
+  <article class="card audit-filter-card">
+    <div class="section-header audit-filter-header">
       <h2 class="section-title">Filters</h2>
+      <p class="metric-note audit-filter-meta">Showing {{ filtered_count }} of {{ total_count }} orders</p>
     </div>
-    <form method="get" class="filter-row">
-      <select name="status">
-        <option value="">All statuses</option>
-        {% for status in statuses %}
-          <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status|capitalize }}</option>
-        {% endfor %}
-      </select>
-      <input type="date" name="date_from" value="{{ date_from }}">
-      <input type="date" name="date_to" value="{{ date_to }}">
-      <button class="{{ 'primary-button' if today_only else 'secondary-button' }}" type="submit" name="today" value="1">Today</button>
-      <button class="primary-button" type="submit">Apply</button>
-      <a class="secondary-button" href="{{ url_for('orders.history') }}">Reset</a>
+    <form method="get" class="audit-filter-form order-filter-form">
+      <div class="order-filter-grid">
+        <select name="status" aria-label="Status">
+          <option value="">All statuses</option>
+          {% for status in statuses %}
+            <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status|capitalize }}</option>
+          {% endfor %}
+        </select>
+        <input type="date" name="date_from" value="{{ date_from }}" aria-label="From date">
+        <input type="date" name="date_to" value="{{ date_to }}" aria-label="To date">
+        <div class="audit-filter-buttons">
+          <button class="{{ 'primary-button' if today_only else 'secondary-button' }}" type="submit" name="today" value="1">Today</button>
+          <button class="primary-button" type="submit">Apply</button>
+          <a class="secondary-button" href="{{ url_for('orders.history') }}">Reset</a>
+        </div>
+      </div>
     </form>
   </article>
 
