@@ -3,30 +3,50 @@
 {% block page_title %}Home{% endblock %}
 {% block page_subtitle %}Role-aware cafe operations overview{% endblock %}
 {% block content %}
-  <section class="grid-cards">
-    <article class="card">
-      <div class="metric-label">Today sales</div>
-      <div class="metric-value">NRs {{ "%.2f"|format(today_sales) }}</div>
-      <div class="metric-note">{{ payments_today }} payments logged</div>
+  <section class="analysis-metric-grid home-metric-grid">
+    <article class="card analysis-metric-card" data-metric="today_sales">
+      <div class="analysis-metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 18V6h16v12M8 14l3-3 2 2 4-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="analysis-metric-body">
+        <div class="metric-label">Today sales</div>
+        <div class="metric-value">NRs {{ "%.2f"|format(today_sales) }}</div>
+        <div class="metric-note">{{ payments_today }} payments logged</div>
+      </div>
     </article>
-    <article class="card">
-      <div class="metric-label">Open orders</div>
-      <div class="metric-value">{{ open_orders }}</div>
-      <div class="metric-note">Waiting for payment</div>
+    <article class="card analysis-metric-card" data-metric="open_orders">
+      <div class="analysis-metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 4h10l1 3H6l1-3zm-2 5h14v11H5V9zm3 3h8M8 15h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="analysis-metric-body">
+        <div class="metric-label">Open orders</div>
+        <div class="metric-value">{{ open_orders }}</div>
+        <div class="metric-note">Waiting for payment</div>
+      </div>
     </article>
-    <article class="card">
-      <div class="metric-label">Active items</div>
-      <div class="metric-value">{{ active_menu_count }}</div>
-      <div class="metric-note">Available to order</div>
+    <article class="card analysis-metric-card" data-metric="active_items">
+      <div class="analysis-metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16v3H4V7zm0 5h10v3H4v-3zm0 5h16v3H4v-3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="analysis-metric-body">
+        <div class="metric-label">Active items</div>
+        <div class="metric-value">{{ active_menu_count }}</div>
+        <div class="metric-note">Available to order</div>
+      </div>
     </article>
-    <article class="card">
-      <div class="metric-label">Role view</div>
-      <div class="metric-value">{{ "Admin" if is_admin else "Employee" }}</div>
-      <div class="metric-note">Access updates by role</div>
+    <article class="card analysis-metric-card" data-metric="role_view">
+      <div class="analysis-metric-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-8 9a8 8 0 0 1 16 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div class="analysis-metric-body">
+        <div class="metric-label">Role view</div>
+        <div class="metric-value">{{ "Admin" if is_admin else "Employee" }}</div>
+        <div class="metric-note">Access updates by role</div>
+      </div>
     </article>
   </section>
 
-  <article class="card">
+  <article class="card analysis-panel-card">
     <div class="section-header">
       <h2 class="section-title">Open orders</h2>
       <a class="primary-button" href="{{ url_for('orders.create') }}">New order</a>

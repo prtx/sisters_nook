@@ -126,7 +126,12 @@ def test_admin_can_load_analysis(client):
     assert resp.status_code == 200
     assert b"Analysis" in resp.data
     assert b"Gross sales" in resp.data
-    assert b"Sales over time" in resp.data
+    assert b"Sales by hour" in resp.data or b"Daily sales trend" in resp.data
+    assert b"24 hours" in resp.data
+    assert b"salesCharts" in resp.data
+    assert b"salesOverTimeChart" in resp.data
+    assert b"paymentMethodChart" in resp.data
+    assert b"chart.js" in resp.data
 
 
 def test_employee_can_edit_open_order(client):

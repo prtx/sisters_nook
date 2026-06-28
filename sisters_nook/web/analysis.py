@@ -268,8 +268,8 @@ def _summary_cards(session: Session, ctx: AnalysisContext) -> list[dict[str, Any
     return cards
 
 
-def _sales_over_time(session: Session, ctx: AnalysisContext) -> list[dict[str, Any]]:
-    paid_orders = (
+def _paid_orders_in_period(session: Session, ctx: AnalysisContext) -> list[Order]:
+    return (
         session.query(Order)
         .filter(
             Order.status.in_([OrderStatus.PAID, OrderStatus.REFUNDED]),
@@ -278,28 +278,174 @@ def _sales_over_time(session: Session, ctx: AnalysisContext) -> list[dict[str, A
         )
         .all()
     )
+
+
+WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def _serialize_chart_series(
+    labels: list[str],
+    sales: dict[str, Decimal],
+    orders: dict[str, int],
+) -> dict[str, Any]:
+    return {
+        "labels": labels,
+        "salesAmounts": [float(_normalize(sales.get(label, Decimal("0.00")))) for label in labels],
+        "orderCounts": [orders.get(label, 0) for label in labels],
+    }
+
+
+def _is_single_calendar_day(ctx: AnalysisContext) -> bool:
+    return ctx.start.date() == ctx.end.date()
+
+
+def _sales_hourly_24h(orders: list[Order], ctx: AnalysisContext) -> dict[str, Any]:
+    labels = [f"{hour:02d}:00" for hour in range(24)]
+    sales = {label: Decimal("0.00") for label in labels}
+    counts = {label: 0 for label in labels}
+    single_day = _is_single_calendar_day(ctx)
+
+    for order in orders:
+        ts = order.paid_at or order.created_at
+        if single_day and ts.date() != ctx.start.date():
+            continue
+        key = f"{ts.hour:02d}:00"
+        sales[key] += order.grand_total
+        counts[key] += 1
+
+    return _serialize_chart_series(labels, sales, counts)
+
+
+def _sales_by_weekday(orders: list[Order]) -> dict[str, Any]:
+    sales = {label: Decimal("0.00") for label in WEEKDAY_LABELS}
+    counts = {label: 0 for label in WEEKDAY_LABELS}
+
+    for order in orders:
+        ts = order.paid_at or order.created_at
+        label = WEEKDAY_LABELS[ts.weekday()]
+        sales[label] += order.grand_total
+        counts[label] += 1
+
+    return _serialize_chart_series(WEEKDAY_LABELS, sales, counts)
+
+
+def _sales_trend_daily(orders: list[Order], ctx: AnalysisContext) -> dict[str, Any]:
+    labels: list[str] = []
+    cursor = _day_start(ctx.start)
+    end_day = _day_start(ctx.end)
+    while cursor <= end_day:
+        labels.append(cursor.strftime("%Y-%m-%d"))
+        cursor += timedelta(days=1)
+
+    sales = {label: Decimal("0.00") for label in labels}
+    counts = {label: 0 for label in labels}
+
+    for order in orders:
+        ts = order.paid_at or order.created_at
+        key = _day_start(ts).strftime("%Y-%m-%d")
+        if key not in sales:
+            continue
+        sales[key] += order.grand_total
+        counts[key] += 1
+
+    return _serialize_chart_series(labels, sales, counts)
+
+
+def _sales_trend_weekly(orders: list[Order], ctx: AnalysisContext) -> dict[str, Any]:
     buckets: dict[str, dict[str, Decimal | int]] = {}
 
-    for order in paid_orders:
+    for order in orders:
         ts = order.paid_at or order.created_at
-        if ctx.group_by_hour:
-            label = ts.strftime("%H:00")
-        else:
-            label = ts.strftime("%Y-%m-%d")
+        week_start = _week_start(ts)
+        label = week_start.strftime("%Y-%m-%d")
         if label not in buckets:
             buckets[label] = {"sales": Decimal("0.00"), "orders": 0}
         buckets[label]["sales"] = buckets[label]["sales"] + order.grand_total  # type: ignore[operator]
         buckets[label]["orders"] = int(buckets[label]["orders"]) + 1  # type: ignore[assignment]
 
+    labels: list[str] = []
+    cursor = _week_start(ctx.start)
+    end_week = _week_start(ctx.end)
+    while cursor <= end_week:
+        labels.append(cursor.strftime("%Y-%m-%d"))
+        cursor += timedelta(days=7)
+
+    sales = {label: Decimal("0.00") for label in labels}
+    counts = {label: 0 for label in labels}
+    for label, bucket in buckets.items():
+        if label in sales:
+            sales[label] = bucket["sales"]  # type: ignore[assignment]
+            counts[label] = int(bucket["orders"])
+
+    display_labels = []
+    for label in labels:
+        week_start = datetime.fromisoformat(label)
+        display_labels.append(f"Week of {week_start.strftime('%b %d')}")
+
+    series = _serialize_chart_series(labels, sales, counts)
+    series["labels"] = display_labels
+    return series
+
+
+def _sales_trend_monthly(orders: list[Order], ctx: AnalysisContext) -> dict[str, Any]:
+    buckets: dict[str, dict[str, Decimal | int]] = {}
+
+    for order in orders:
+        ts = order.paid_at or order.created_at
+        label = ts.strftime("%Y-%m")
+        if label not in buckets:
+            buckets[label] = {"sales": Decimal("0.00"), "orders": 0}
+        buckets[label]["sales"] = buckets[label]["sales"] + order.grand_total  # type: ignore[operator]
+        buckets[label]["orders"] = int(buckets[label]["orders"]) + 1  # type: ignore[assignment]
+
+    labels: list[str] = []
+    month_cursor = _month_start(ctx.start)
+    end_month = _month_start(ctx.end)
+    while month_cursor <= end_month:
+        labels.append(month_cursor.strftime("%Y-%m"))
+        if month_cursor.month == 12:
+            month_cursor = datetime(month_cursor.year + 1, 1, 1)
+        else:
+            month_cursor = datetime(month_cursor.year, month_cursor.month + 1, 1)
+
+    sales = {label: Decimal("0.00") for label in labels}
+    counts = {label: 0 for label in labels}
+    for label, bucket in buckets.items():
+        if label in sales:
+            sales[label] = bucket["sales"]  # type: ignore[assignment]
+            counts[label] = int(bucket["orders"])
+
+    display_labels = [datetime.strptime(label, "%Y-%m").strftime("%b %Y") for label in labels]
+    series = _serialize_chart_series(labels, sales, counts)
+    series["labels"] = display_labels
+    return series
+
+
+def _sales_chart_series(session: Session, ctx: AnalysisContext) -> dict[str, Any]:
+    orders = _paid_orders_in_period(session, ctx)
+    return {
+        "hourly": _sales_hourly_24h(orders, ctx),
+        "weekday": _sales_by_weekday(orders),
+        "trend": {
+            "daily": _sales_trend_daily(orders, ctx),
+            "weekly": _sales_trend_weekly(orders, ctx),
+            "monthly": _sales_trend_monthly(orders, ctx),
+        },
+    }
+
+
+def _sales_over_time(session: Session, ctx: AnalysisContext) -> list[dict[str, Any]]:
+    """Legacy daily rows kept for compatibility with older callers/tests."""
+    series = _sales_trend_daily(_paid_orders_in_period(session, ctx), ctx)
     rows = []
-    for label in sorted(buckets.keys()):
-        data = buckets[label]
+    for idx, label in enumerate(series["labels"]):
+        sales = Decimal(str(series["salesAmounts"][idx]))
         rows.append(
             {
                 "label": label,
-                "sales": _normalize(data["sales"]),  # type: ignore[arg-type]
-                "orders": data["orders"],
-                "sales_display": format_currency(data["sales"]),  # type: ignore[arg-type]
+                "sales": _normalize(sales),
+                "orders": series["orderCounts"][idx],
+                "sales_display": format_currency(sales),
             }
         )
     return rows
@@ -585,6 +731,7 @@ def get_analysis_dashboard_data(
             "to_date": end_date.date().isoformat(),
         },
         "summary_cards": _summary_cards(session, ctx),
+        "sales_charts": _sales_chart_series(session, ctx),
         "sales_over_time": _sales_over_time(session, ctx),
         "payment_method_breakdown": _payment_method_breakdown(session, ctx),
         "discounts_tax_tips": _discounts_tax_tips(session, ctx),

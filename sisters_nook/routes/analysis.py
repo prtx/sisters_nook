@@ -3,7 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, render_template, request
 
 from sisters_nook.db import get_session
-from sisters_nook.schema import OrderStatus, PaymentMethod, User
+from sisters_nook.schema import PAYMENT_METHOD_LABELS, OrderStatus, PaymentMethod, User
 from sisters_nook.web.analysis import get_analysis_dashboard_data, resolve_date_range
 from sisters_nook.web.auth_utils import admin_required, get_current_user
 
@@ -28,6 +28,27 @@ ORDER_STATUS_OPTIONS = [
     ("refunded", "Refunded"),
     ("all", "All"),
 ]
+
+CHART_COLORS = ["#5a3721", "#8b6344", "#a8845f", "#d9b89a", "#7d7a4d", "#c4a882"]
+
+
+def build_chart_data(data: dict, payment_method_labels: dict[str, str]) -> dict:
+    sales_charts = data["sales_charts"]
+    payments = [row for row in data["payment_method_breakdown"] if row["count"] > 0]
+    default_view = "hourly" if data["filters"]["date_range"] in {"today", "yesterday"} else "trend"
+    default_trend = "daily"
+    if data["filters"]["date_range"] == "this_month":
+        default_trend = "weekly"
+    return {
+        "defaultView": default_view,
+        "defaultTrend": default_trend,
+        "salesCharts": sales_charts,
+        "paymentLabels": [payment_method_labels.get(row["method"], row["method"]) for row in payments],
+        "paymentAmounts": [float(row["amount"]) for row in payments],
+        "paymentCounts": [row["count"] for row in payments],
+        "paymentPercents": [float(row["percent"]) for row in payments],
+        "colors": CHART_COLORS[: max(len(payments), 1)],
+    }
 
 
 @analysis_bp.route("/analysis")
@@ -64,9 +85,12 @@ def index():
             is_admin=True,
         )
 
+    chart_data = build_chart_data(data, PAYMENT_METHOD_LABELS)
+
     return render_template(
         "analysis/index.html",
         data=data,
+        chart_data=chart_data,
         date_range=date_range,
         compare=compare,
         user_filter=user_filter or "",

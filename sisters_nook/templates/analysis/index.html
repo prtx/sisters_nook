@@ -3,7 +3,7 @@
 {% block page_title %}Analysis{% endblock %}
 {% block page_subtitle %}Sales, menu performance, payments, and cafe trends{% endblock %}
 {% block content %}
-  <article class="card audit-filter-card">
+  <article class="card audit-filter-card analysis-filter-card">
     <div class="section-header audit-filter-header">
       <h2 class="section-title">Filters</h2>
       <p class="metric-note audit-filter-meta">{{ data.filters.from_date }} to {{ data.filters.to_date }}</p>
@@ -72,287 +72,265 @@
 
   <section class="analysis-metric-grid">
     {% for card in data.summary_cards %}
-      <article class="card analysis-metric-card">
-        <div class="metric-label">{{ card.label }}</div>
-        <div class="metric-value">{{ card.value }}</div>
-        {% if card.comparison %}
-          <div class="analysis-comparison analysis-comparison-{{ card.comparison.class }}">{{ card.comparison.text }}</div>
-        {% endif %}
+      <article class="card analysis-metric-card" data-metric="{{ card.key }}">
+        <div class="analysis-metric-icon" aria-hidden="true">
+          {% if card.key == 'gross_sales' %}
+            <svg viewBox="0 0 24 24"><path d="M4 18V6h16v12M8 14l3-3 2 2 4-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {% elif card.key == 'net_sales' %}
+            <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 11h8M8 15h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          {% elif card.key == 'orders_paid' %}
+            <svg viewBox="0 0 24 24"><path d="M7 4h10l1 3H6l1-3zm-2 5h14v11H5V9zm3 3h8M8 15h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          {% elif card.key == 'average_order_value' %}
+            <svg viewBox="0 0 24 24"><path d="M5 18V8h3v10M10 18V5h3v13M15 18v-7h3v7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          {% elif card.key == 'discounts' %}
+            <svg viewBox="0 0 24 24"><path d="M14 4l6 6-8 8H6v-6l8-8zm-2 2L8 14v2h2l4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {% elif card.key == 'tips' %}
+            <svg viewBox="0 0 24 24"><path d="M12 3l2.2 4.5 5 .7-3.6 3.5.9 5.1L12 14.8 7.5 16.8l.9-5.1L4.8 8.2l5-.7L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          {% else %}
+            <svg viewBox="0 0 24 24"><path d="M8 8H5v11h11v-3M13 5h6v6M19 5l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {% endif %}
+        </div>
+        <div class="analysis-metric-body">
+          <div class="metric-label">{{ card.label }}</div>
+          <div class="metric-value">{{ card.value }}</div>
+          {% if card.comparison %}
+            <div class="analysis-comparison analysis-comparison-{{ card.comparison.class }}">{{ card.comparison.text }}</div>
+          {% endif %}
+        </div>
       </article>
     {% endfor %}
   </section>
 
   <section class="analysis-grid">
-    <article class="card analysis-span-2">
-      <h2 class="section-title">Sales over time</h2>
-      {% if data.sales_over_time %}
-        <div class="analysis-chart-table">
-          <table>
-            <thead>
-            <tr>
-              <th>Period</th>
-              <th>Sales</th>
-              <th>Orders</th>
-              <th>Sales bar</th>
-              <th>Orders bar</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in data.sales_over_time %}
-              <tr>
-                <td>{{ row.label }}</td>
-                <td>{{ row.sales_display }}</td>
-                <td>{{ row.orders }}</td>
-                <td>
-                  <div class="analysis-bar-wrap">
-                    <div class="analysis-bar analysis-bar-sales" style="width: {{ (row.sales / data.max_sales * 100) if data.max_sales > 0 else 0 }}%;"></div>
-                  </div>
-                </td>
-                <td>
-                  <div class="analysis-bar-wrap">
-                    <div class="analysis-bar analysis-bar-orders" style="width: {{ (row.orders / data.max_orders * 100) if data.max_orders > 0 else 0 }}%;"></div>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+    <article class="card analysis-chart-card analysis-span-2">
+      <div class="analysis-card-header">
+        <div class="analysis-card-heading">
+          <span class="analysis-section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 18V6h16v12M7 15l3-3 2 2 4-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <h2 class="section-title" id="salesChartTitle">Sales by hour</h2>
+            <p class="metric-note" id="salesChartSubtitle">24-hour view with order bars and sales line</p>
+          </div>
         </div>
-      {% else %}
-        <p class="metric-note">No data for this period.</p>
-      {% endif %}
-    </article>
-
-    <article class="card">
-      <h2 class="section-title">Payment method breakdown</h2>
-      {% if data.payment_method_breakdown %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-            <tr>
-              <th>Method</th>
-              <th>Amount</th>
-              <th>Count</th>
-              <th>Share</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in data.payment_method_breakdown %}
-              {% if row.count > 0 %}
-                <tr>
-                  <td>{{ payment_method_labels.get(row.method, row.method) }}</td>
-                  <td>{{ row.amount_display }}</td>
-                  <td>{{ row.count }}</td>
-                  <td>
-                    <div class="analysis-share-row">
-                      <span>{{ row.percent_display }}</span>
-                      <div class="analysis-bar-wrap">
-                        <div class="analysis-bar analysis-bar-share" style="width: {{ row.percent }}%;"></div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              {% endif %}
-            {% else %}
-              <tr><td colspan="4">No data for this period.</td></tr>
-            {% endfor %}
-            </tbody>
-          </table>
+        <div class="analysis-chart-controls">
+          <div class="analysis-chart-tabs" role="tablist" aria-label="Sales chart type">
+            <button type="button" class="analysis-chart-tab" data-chart-view="hourly">24 hours</button>
+            <button type="button" class="analysis-chart-tab" data-chart-view="weekday">Days of week</button>
+            <button type="button" class="analysis-chart-tab" data-chart-view="trend">Trend</button>
+          </div>
+          <div class="analysis-chart-tabs analysis-chart-subtabs" id="trendGranularityTabs" hidden role="tablist" aria-label="Trend granularity">
+            <button type="button" class="analysis-chart-tab" data-trend-granularity="daily">Daily</button>
+            <button type="button" class="analysis-chart-tab" data-trend-granularity="weekly">Weekly</button>
+            <button type="button" class="analysis-chart-tab" data-trend-granularity="monthly">Monthly</button>
+          </div>
         </div>
-      {% endif %}
-    </article>
-
-    <article class="card">
-      <h2 class="section-title">Discounts, tax and tips</h2>
-      <div class="analysis-stat-list">
-        <div class="analysis-stat-row"><span>Subtotal</span><strong>{{ data.discounts_tax_tips.subtotal }}</strong></div>
-        <div class="analysis-stat-row"><span>Discounts</span><strong>{{ data.discounts_tax_tips.discounts }}</strong></div>
-        <div class="analysis-stat-row"><span>Discount rate</span><strong>{{ data.discounts_tax_tips.discount_rate }}</strong></div>
-        <div class="analysis-stat-row"><span>Tax collected</span><strong>{{ data.discounts_tax_tips.tax_collected }}</strong></div>
-        <div class="analysis-stat-row"><span>Tax rate</span><strong>{{ data.discounts_tax_tips.tax_rate }}</strong></div>
-        <div class="analysis-stat-row"><span>Tips collected</span><strong>{{ data.discounts_tax_tips.tips_collected }}</strong></div>
-        <div class="analysis-stat-row"><span>Tip rate</span><strong>{{ data.discounts_tax_tips.tip_rate }}</strong></div>
+      </div>
+      <div class="analysis-chart-shell">
+        <canvas id="salesOverTimeChart" aria-label="Sales chart"></canvas>
       </div>
     </article>
 
-    <article class="card">
-      <h2 class="section-title">Top selling items by quantity</h2>
+    <article class="card analysis-chart-card">
+      <div class="analysis-card-header">
+        <div class="analysis-card-heading">
+          <span class="analysis-section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 12V8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <div>
+            <h2 class="section-title">Payment method breakdown</h2>
+            <p class="metric-note">Share of paid amount by method</p>
+          </div>
+        </div>
+      </div>
+      <div class="analysis-donut-layout">
+        <div class="analysis-chart-shell analysis-donut-shell">
+          <canvas id="paymentMethodChart" aria-label="Payment method donut chart"></canvas>
+        </div>
+        <ul class="analysis-payment-legend">
+          {% for row in data.payment_method_breakdown if row.count > 0 %}
+            <li>
+              <span class="analysis-legend-dot" style="background: {{ chart_data.colors[loop.index0 % chart_data.colors|length] }};"></span>
+              <span class="analysis-legend-label">{{ payment_method_labels.get(row.method, row.method) }}</span>
+              <span class="analysis-legend-value">{{ row.amount_display }}</span>
+              <span class="analysis-legend-meta">{{ row.count }} · {{ row.percent_display }}</span>
+            </li>
+          {% else %}
+            <li class="analysis-empty-state inline">No payment data for this period.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </article>
+
+    <article class="card analysis-panel-card">
+      <div class="analysis-card-header">
+        <div class="analysis-card-heading">
+          <span class="analysis-section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 8h12M6 12h8M6 16h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <h2 class="section-title">Discounts, tax and tips</h2>
+        </div>
+      </div>
+      <div class="analysis-kpi-grid">
+        <div class="analysis-kpi"><span>Subtotal</span><strong>{{ data.discounts_tax_tips.subtotal }}</strong></div>
+        <div class="analysis-kpi"><span>Discounts</span><strong>{{ data.discounts_tax_tips.discounts }}</strong></div>
+        <div class="analysis-kpi accent-warn"><span>Discount rate</span><strong>{{ data.discounts_tax_tips.discount_rate }}</strong></div>
+        <div class="analysis-kpi"><span>Tax collected</span><strong>{{ data.discounts_tax_tips.tax_collected }}</strong></div>
+        <div class="analysis-kpi"><span>Tax rate</span><strong>{{ data.discounts_tax_tips.tax_rate }}</strong></div>
+        <div class="analysis-kpi accent-tip"><span>Tips collected</span><strong>{{ data.discounts_tax_tips.tips_collected }}</strong></div>
+        <div class="analysis-kpi accent-tip"><span>Tip rate</span><strong>{{ data.discounts_tax_tips.tip_rate }}</strong></div>
+      </div>
+    </article>
+
+    <article class="card analysis-panel-card">
+      <div class="analysis-card-header">
+        <h2 class="section-title">Top selling items by quantity</h2>
+      </div>
       {% if data.top_selling_items %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-            <tr><th>#</th><th>Item</th><th>Qty</th><th>Revenue</th><th>Avg price</th></tr>
-            </thead>
-            <tbody>
-            {% for row in data.top_selling_items %}
-              <tr>
-                <td>{{ row.rank }}</td>
-                <td>{{ row.item }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>{{ row.revenue_display }}</td>
-                <td>{{ row.average_price }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <ol class="analysis-ranked-list">
+          {% for row in data.top_selling_items %}
+            <li>
+              <span class="analysis-rank">{{ row.rank }}</span>
+              <div class="analysis-ranked-main">
+                <strong>{{ row.item }}</strong>
+                <span class="metric-note">{{ row.quantity }} sold · avg {{ row.average_price }}</span>
+              </div>
+              <strong class="analysis-ranked-value">{{ row.revenue_display }}</strong>
+            </li>
+          {% endfor %}
+        </ol>
       {% else %}
-        <p class="metric-note">No data for this period.</p>
+        <p class="analysis-empty-state inline">No data for this period.</p>
       {% endif %}
     </article>
 
-    <article class="card">
-      <h2 class="section-title">Top revenue items</h2>
+    <article class="card analysis-panel-card">
+      <div class="analysis-card-header">
+        <h2 class="section-title">Top revenue items</h2>
+      </div>
       {% if data.top_revenue_items %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-            <tr><th>#</th><th>Item</th><th>Qty</th><th>Revenue</th><th>Avg price</th></tr>
-            </thead>
-            <tbody>
-            {% for row in data.top_revenue_items %}
-              <tr>
-                <td>{{ row.rank }}</td>
-                <td>{{ row.item }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>{{ row.revenue_display }}</td>
-                <td>{{ row.average_price }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <ol class="analysis-ranked-list">
+          {% for row in data.top_revenue_items %}
+            <li>
+              <span class="analysis-rank">{{ row.rank }}</span>
+              <div class="analysis-ranked-main">
+                <strong>{{ row.item }}</strong>
+                <span class="metric-note">{{ row.quantity }} sold · avg {{ row.average_price }}</span>
+              </div>
+              <strong class="analysis-ranked-value">{{ row.revenue_display }}</strong>
+            </li>
+          {% endfor %}
+        </ol>
       {% else %}
-        <p class="metric-note">No data for this period.</p>
+        <p class="analysis-empty-state inline">No data for this period.</p>
       {% endif %}
     </article>
 
-    <article class="card">
-      <h2 class="section-title">Lowest selling active items</h2>
+    <article class="card analysis-panel-card">
+      <div class="analysis-card-header">
+        <h2 class="section-title">Lowest selling active items</h2>
+      </div>
       {% if data.lowest_selling_active_items %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-            <tr><th>#</th><th>Item</th><th>Qty</th><th>Revenue</th></tr>
-            </thead>
-            <tbody>
-            {% for row in data.lowest_selling_active_items %}
-              <tr>
-                <td>{{ row.rank }}</td>
-                <td>{{ row.item }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>{{ row.revenue_display }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <ol class="analysis-ranked-list muted-ranks">
+          {% for row in data.lowest_selling_active_items %}
+            <li>
+              <span class="analysis-rank">{{ row.rank }}</span>
+              <div class="analysis-ranked-main">
+                <strong>{{ row.item }}</strong>
+                <span class="metric-note">{{ row.quantity }} sold</span>
+              </div>
+              <strong class="analysis-ranked-value">{{ row.revenue_display }}</strong>
+            </li>
+          {% endfor %}
+        </ol>
       {% else %}
-        <p class="metric-note">No data for this period.</p>
+        <p class="analysis-empty-state inline">No data for this period.</p>
       {% endif %}
     </article>
 
-    <article class="card">
-      <h2 class="section-title">Staff activity</h2>
+    <article class="card analysis-panel-card">
+      <div class="analysis-card-header">
+        <h2 class="section-title">Staff activity</h2>
+      </div>
       {% if data.staff_activity %}
-        <div class="table-wrap">
-          <table>
-            <thead>
-            <tr><th>User</th><th>Orders created</th><th>Payments logged</th><th>Sales handled</th></tr>
-            </thead>
-            <tbody>
-            {% for row in data.staff_activity %}
-              <tr>
-                <td>{{ row.user }}</td>
-                <td>{{ row.orders_created }}</td>
-                <td>{{ row.payments_logged }}</td>
-                <td>{{ row.sales_handled }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        <ul class="analysis-staff-list">
+          {% for row in data.staff_activity %}
+            <li>
+              <span class="analysis-staff-avatar">{{ row.user[:1] }}</span>
+              <div class="analysis-staff-main">
+                <strong>{{ row.user }}</strong>
+                <span class="metric-note">{{ row.email }}</span>
+              </div>
+              <div class="analysis-staff-stats">
+                <span><strong>{{ row.orders_created }}</strong> orders</span>
+                <span><strong>{{ row.payments_logged }}</strong> payments</span>
+                <span><strong>{{ row.sales_handled }}</strong></span>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-        <p class="metric-note">No data for this period.</p>
+        <p class="analysis-empty-state inline">No staff activity for this period.</p>
       {% endif %}
     </article>
 
     {% if data.refunds_and_cancellations %}
-      <article class="card">
-        <h2 class="section-title">Refunds and cancellations</h2>
+      <article class="card analysis-panel-card">
+        <div class="analysis-card-header">
+          <h2 class="section-title">Refunds and cancellations</h2>
+        </div>
         <div class="analysis-mini-metrics">
-          <div><span class="metric-label">Refund total</span><div class="metric-value" style="font-size: 20px;">{{ data.refunds_and_cancellations.refund_total }}</div></div>
-          <div><span class="metric-label">Refund count</span><div class="metric-value" style="font-size: 20px;">{{ data.refunds_and_cancellations.refund_count }}</div></div>
-          <div><span class="metric-label">Cancelled orders</span><div class="metric-value" style="font-size: 20px;">{{ data.refunds_and_cancellations.cancelled_orders }}</div></div>
-          <div><span class="metric-label">Cancelled value</span><div class="metric-value" style="font-size: 20px;">{{ data.refunds_and_cancellations.cancelled_value }}</div></div>
+          <div class="analysis-mini-metric"><span class="metric-label">Refund total</span><div class="metric-value">{{ data.refunds_and_cancellations.refund_total }}</div></div>
+          <div class="analysis-mini-metric"><span class="metric-label">Refund count</span><div class="metric-value">{{ data.refunds_and_cancellations.refund_count }}</div></div>
+          <div class="analysis-mini-metric"><span class="metric-label">Cancelled orders</span><div class="metric-value">{{ data.refunds_and_cancellations.cancelled_orders }}</div></div>
+          <div class="analysis-mini-metric"><span class="metric-label">Cancelled value</span><div class="metric-value">{{ data.refunds_and_cancellations.cancelled_value }}</div></div>
         </div>
         {% if data.refunds_and_cancellations.recent_refunds %}
           <h3 class="analysis-subtitle">Recent refunds</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-              <tr><th>Date</th><th>Amount</th><th>Reason</th><th>Refunded by</th></tr>
-              </thead>
-              <tbody>
-              {% for row in data.refunds_and_cancellations.recent_refunds %}
-                <tr>
-                  <td>{{ row.date }}</td>
-                  <td>{{ row.amount }}</td>
-                  <td>{{ row.reason }}</td>
-                  <td>{{ row.refunded_by }}</td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
+          <ul class="analysis-refund-list">
+            {% for row in data.refunds_and_cancellations.recent_refunds %}
+              <li>
+                <div><strong>{{ row.amount }}</strong><span class="metric-note">{{ row.date }}</span></div>
+                <div class="metric-note">{{ row.reason }}</div>
+                <div class="metric-note">by {{ row.refunded_by }}</div>
+              </li>
+            {% endfor %}
+          </ul>
         {% else %}
-          <p class="metric-note">No refunds for this period.</p>
+          <p class="analysis-empty-state inline">No refunds for this period.</p>
         {% endif %}
       </article>
     {% endif %}
 
     {% if data.recent_price_changes is not none %}
-      <article class="card">
+      <article class="card analysis-panel-card">
         <div class="section-header">
-          <h2 class="section-title">Recent price changes</h2>
+          <div class="analysis-card-heading">
+            <h2 class="section-title">Recent price changes</h2>
+          </div>
           <span class="chip">Admin only</span>
         </div>
         {% if data.recent_price_changes %}
-          <div class="table-wrap">
-            <table>
-              <thead>
-              <tr><th>Item</th><th>Old price</th><th>New price</th><th>Changed by</th><th>Changed at</th></tr>
-              </thead>
-              <tbody>
-              {% for row in data.recent_price_changes %}
-                <tr>
-                  <td>{{ row.item }}</td>
-                  <td>{{ row.old_price }}</td>
-                  <td>{{ row.new_price }}</td>
-                  <td>{{ row.changed_by }}</td>
-                  <td>{{ row.changed_at }}</td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
+          <ul class="analysis-price-list">
+            {% for row in data.recent_price_changes %}
+              <li>
+                <strong>{{ row.item }}</strong>
+                <span class="metric-note">{{ row.old_price }} → {{ row.new_price }}</span>
+                <span class="metric-note">{{ row.changed_by }} · {{ row.changed_at }}</span>
+              </li>
+            {% endfor %}
+          </ul>
         {% else %}
-          <p class="metric-note">No price changes for this period.</p>
+          <p class="analysis-empty-state inline">No price changes for this period.</p>
         {% endif %}
       </article>
     {% endif %}
   </section>
+
+  <script id="analysis-chart-data" type="application/json">{{ chart_data | tojson }}</script>
 {% endblock %}
 
 {% block extra_scripts %}
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const dateRange = document.getElementById("analysisDateRange");
-    const customDates = document.getElementById("analysisCustomDates");
-    if (!dateRange || !customDates) return;
-    dateRange.addEventListener("change", () => {
-      customDates.hidden = dateRange.value !== "custom";
-    });
-  });
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
 {% endblock %}

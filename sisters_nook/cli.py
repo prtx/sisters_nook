@@ -55,10 +55,11 @@ def load_seed_menu_rows(csv_path: Path) -> list[tuple[str, str | None, Decimal]]
     return rows
 
 
-def seed_data():
-    reset_database()
-    with get_session() as session:
-        menu_rows = load_seed_menu_rows(SEED_MENU_FILE)
+def seed_users_and_menu(session):
+    menu_rows = load_seed_menu_rows(SEED_MENU_FILE)
+    admin = session.query(User).filter_by(email="admin@sisters.local").one_or_none()
+    employee = session.query(User).filter_by(email="employee@sisters.local").one_or_none()
+    if admin is None:
         admin = User(
             first_name="Admin",
             last_name="User",
@@ -66,6 +67,8 @@ def seed_data():
             password_hash=hash_password(DEFAULT_PASSWORD),
             role=UserRole.ADMIN,
         )
+        session.add(admin)
+    if employee is None:
         employee = User(
             first_name="Employee",
             last_name="User",
@@ -73,16 +76,49 @@ def seed_data():
             password_hash=hash_password(DEFAULT_PASSWORD),
             role=UserRole.EMPLOYEE,
         )
-        session.add_all([admin, employee])
-        session.flush()
-        menu_service = MenuService(session)
+        session.add(employee)
+    session.flush()
+    menu_service = MenuService(session)
+    if not menu_service.list_active():
         for idx, (name, description, price) in enumerate(menu_rows, start=1):
             menu_service.create_menu_item(admin, name, price, description, sort_order=idx)
         session.flush()
+    return admin, employee
+
+
+def seed_data():
+    reset_database()
+    with get_session() as session:
+        seed_users_and_menu(session)
         menu_count = session.query(MenuItem).count()
         print(f"Seeded admin, employee, and {menu_count} menu items from {SEED_MENU_FILE.name}.")
         print(f"  admin@sisters.local / {DEFAULT_PASSWORD}")
         print(f"  employee@sisters.local / {DEFAULT_PASSWORD}")
+
+
+def mock_seed_data(args: argparse.Namespace):
+    from .mock_seed import ensure_demo_users, populate_mock_sales
+
+    if args.reset:
+        reset_database()
+    with get_session() as session:
+        admin, employee = ensure_demo_users(session, seed_users_and_menu)
+        stats = populate_mock_sales(
+            session,
+            admin,
+            employee,
+            days=args.days,
+            seed=args.seed,
+        )
+    print("Mock sales data seeded for Analysis dashboard demo.")
+    print(f"  Paid orders: {stats['paid_orders']}")
+    print(f"  Open orders: {stats['open_orders']}")
+    print(f"  Cancelled orders: {stats['cancelled_orders']}")
+    print(f"  Refunds: {stats['refunds']}")
+    print(f"  Price changes: {stats['price_changes']}")
+    print(f"  Span: last {args.days} days (including busy hours today)")
+    if not args.reset:
+        print("  Tip: use mock-seed --reset for a clean demo database.")
 
 
 def clean(args: argparse.Namespace):
@@ -142,6 +178,17 @@ def main():
 
     subparsers.add_parser("seed", help="Seed the database with default user accounts and menu.")
     subparsers.add_parser("reset-db", help="Drop and recreate the SQLite schema.")
+    mock_parser = subparsers.add_parser(
+        "mock-seed",
+        help="Populate mock sales, payments, refunds, and price changes for Analysis demos.",
+    )
+    mock_parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Reset the database and seed users/menu before generating mock sales.",
+    )
+    mock_parser.add_argument("--days", type=int, default=10, help="Number of days of mock history.")
+    mock_parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducible mock data.")
 
     order_parser = subparsers.add_parser("create-order", help="Create an order for actor.")
     order_parser.add_argument("--actor-email", required=True)
@@ -171,6 +218,8 @@ def main():
         log_payment(args)
     elif args.command == "create-refund":
         create_refund(args)
+    elif args.command == "mock-seed":
+        mock_seed_data(args)
     else:
         parser.print_help()
 

@@ -136,6 +136,21 @@ def test_analysis_payment_method_filter(analysis_setup):
     assert cash["count"] == 0
 
 
+def test_analysis_sales_charts_include_three_views(analysis_setup):
+    session = analysis_setup["session"]
+    admin = analysis_setup["admin"]
+    start, end = resolve_date_range("this_month")
+    data = get_analysis_dashboard_data(session, admin, start, end, date_range="this_month", is_admin=True)
+
+    charts = data["sales_charts"]
+    assert len(charts["hourly"]["labels"]) == 24
+    assert charts["weekday"]["labels"] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    assert "daily" in charts["trend"]
+    assert "weekly" in charts["trend"]
+    assert "monthly" in charts["trend"]
+    assert len(charts["trend"]["daily"]["labels"]) >= 1
+
+
 def test_analysis_empty_range_does_not_crash(analysis_setup):
     session = analysis_setup["session"]
     admin = analysis_setup["admin"]
@@ -143,7 +158,7 @@ def test_analysis_empty_range_does_not_crash(analysis_setup):
     end = start + timedelta(days=1)
     data = get_analysis_dashboard_data(session, admin, start, end, is_admin=True)
     assert data["summary_cards"][0]["value"] == "NRs 0.00"
-    assert data["sales_over_time"] == []
+    assert data["sales_charts"]["hourly"]["salesAmounts"] == [0.0] * 24
 
 
 def test_analysis_date_range_excludes_old_orders(analysis_setup):
