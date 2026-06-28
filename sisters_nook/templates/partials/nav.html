@@ -4,6 +4,7 @@
   <a class="nav-button{% if request.endpoint in ['orders.history', 'orders.detail', 'orders.payment'] %} active{% endif %}" href="{{ url_for('orders.history') }}">Order History</a>
   {% if is_admin %}
     <a class="nav-button{% if request.endpoint in ['menu.list_menu', 'menu.create_menu', 'menu.edit_menu', 'menu.price_history'] %} active{% endif %}" href="{{ url_for('menu.list_menu') }}">Menu</a>
+    <a class="nav-button{% if request.endpoint == 'analysis.index' %} active{% endif %}" href="{{ url_for('analysis.index') }}">Analysis</a>
     <a class="nav-button{% if request.endpoint in ['users.list_users', 'users.create_user', 'users.edit_user'] %} active{% endif %}" href="{{ url_for('users.list_users') }}">Users</a>
     <a class="nav-button{% if request.endpoint == 'audit.list_audit' %} active{% endif %}" href="{{ url_for('audit.list_audit') }}">Audit Log</a>
   {% endif %}

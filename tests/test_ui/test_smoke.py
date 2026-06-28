@@ -114,6 +114,21 @@ def test_employee_can_create_refund(client):
     assert b"Admin access required" not in resp.data
 
 
+def test_employee_blocked_from_analysis(client):
+    client.post("/login", data={"email": "employee@sisters.local", "password": "changeme"})
+    resp = client.get("/analysis", follow_redirects=True)
+    assert b"Admin access required" in resp.data
+
+
+def test_admin_can_load_analysis(client):
+    client.post("/login", data={"email": "admin@sisters.local", "password": "changeme"})
+    resp = client.get("/analysis")
+    assert resp.status_code == 200
+    assert b"Analysis" in resp.data
+    assert b"Gross sales" in resp.data
+    assert b"Sales over time" in resp.data
+
+
 def test_employee_can_edit_open_order(client):
     client.post("/login", data={"email": "employee@sisters.local", "password": "changeme"})
     session = SessionLocal()

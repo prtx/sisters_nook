@@ -6,6 +6,7 @@ from flask import Flask, session
 
 from sisters_nook.db import get_session
 from sisters_nook.rest import api
+from sisters_nook.routes.analysis import analysis_bp
 from sisters_nook.routes.audit import audit_bp
 from sisters_nook.routes.auth import auth_bp
 from sisters_nook.routes.dashboard import dashboard_bp
@@ -27,6 +28,7 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(menu_bp)
+    app.register_blueprint(analysis_bp)
     app.register_blueprint(orders_bp)
     app.register_blueprint(payments_bp)
     app.register_blueprint(refunds_bp)
