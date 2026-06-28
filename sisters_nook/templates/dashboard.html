@@ -26,65 +26,42 @@
     </article>
   </section>
 
-  <section class="two-column">
-    <article class="card">
-      <div class="section-header">
-        <h2 class="section-title">Recent orders</h2>
-        <a class="primary-button" href="{{ url_for('orders.create') }}">New order</a>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
+  <article class="card">
+    <div class="section-header">
+      <h2 class="section-title">Open orders</h2>
+      <a class="primary-button" href="{{ url_for('orders.create') }}">New order</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Order</th>
+          <th>Order name</th>
+          <th>Status</th>
+          <th>Total</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in open_orders_list %}
           <tr>
-            <th>Order</th>
-            <th>Order name</th>
-            <th>Status</th>
-            <th>Total</th>
-            <th>Created</th>
-            <th>Actions</th>
+            <td><a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.order_number }}</a></td>
+            <td>{{ order.order_name or "-" }}</td>
+            <td>{% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
+            <td>NRs {{ "%.2f"|format(order.grand_total) }}</td>
+            <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td class="button-row">
+              <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>
+              <a class="secondary-button" href="{{ url_for('orders.edit', order_id=order.id) }}">Edit</a>
+              <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+            </td>
           </tr>
-          </thead>
-          <tbody>
-          {% for order in recent_orders %}
-            <tr>
-              <td><a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.order_number }}</a></td>
-              <td>{{ order.order_name or "-" }}</td>
-              <td>{% with value=order.status.value %}{% include "partials/status_badge.html" %}{% endwith %}</td>
-              <td>NRs {{ "%.2f"|format(order.grand_total) }}</td>
-              <td>{{ order.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
-              <td class="button-row">
-                <a class="secondary-button" href="{{ url_for('orders.detail', order_id=order.id) }}">View</a>
-                {% if order.status.value == "open" %}
-                  <a class="secondary-button" href="{{ url_for('orders.edit', order_id=order.id) }}">Edit</a>
-                  <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
-                {% endif %}
-              </td>
-            </tr>
-          {% else %}
-            <tr><td colspan="6">No orders yet.</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </article>
-
-    <article class="card">
-      <h2 class="section-title">Quick stats</h2>
-      <div class="stack" style="margin-top: 10px;">
-        <div class="order-card"><strong>Orders paid today:</strong> {{ paid_today }}</div>
-        <div class="order-card"><strong>Inactive menu items:</strong> {{ inactive_menu_count }}</div>
-        {% if is_admin %}
-          <div class="order-card"><strong>Total users:</strong> {{ user_count }}</div>
-        {% endif %}
-      </div>
-      <div class="button-row" style="margin-top: 12px;">
-        <a class="secondary-button" href="{{ url_for('orders.history') }}">View order history</a>
-        {% if is_admin %}
-          <a class="secondary-button" href="{{ url_for('menu.list_menu') }}">Manage menu</a>
-          <a class="secondary-button" href="{{ url_for('users.list_users') }}">Manage users</a>
-          <a class="secondary-button" href="{{ url_for('audit.list_audit') }}">View audit log</a>
-        {% endif %}
-      </div>
-    </article>
-  </section>
+        {% else %}
+          <tr><td colspan="6">No open orders.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
 {% endblock %}

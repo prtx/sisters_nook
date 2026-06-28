@@ -69,6 +69,16 @@ def recent_orders(db_session: Session, limit: int = 10) -> list[Order]:
     return db_session.query(Order).order_by(Order.created_at.desc()).limit(limit).all()
 
 
+def open_orders_list(db_session: Session, limit: int = 50) -> list[Order]:
+    return (
+        db_session.query(Order)
+        .filter(Order.status == OrderStatus.OPEN)
+        .order_by(Order.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 def recent_payments(db_session: Session, limit: int = 10) -> list[Payment]:
     return db_session.query(Payment).order_by(Payment.created_at.desc()).limit(limit).all()
 
