@@ -9,6 +9,7 @@ from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from .schema import (
+    AuditEventSuppression,
     MenuItem,
     MenuItemPriceHistory,
     Order,
@@ -108,9 +109,19 @@ class UserService(BaseService):
 
     def deactivate_user(self, actor: User, user_id: str) -> User:
         _ensure_admin(actor)
+        if actor.id == user_id:
+            raise ValueError("You cannot delete your own account.")
         user = self.session.get(User, user_id)
         if user is None:
             raise ValueError("User not found.")
+        if user.role == UserRole.ADMIN and user.is_active:
+            active_admins = (
+                self.session.query(User)
+                .filter(User.role == UserRole.ADMIN, User.is_active.is_(True))
+                .count()
+            )
+            if active_admins <= 1:
+                raise ValueError("Cannot delete the last active admin.")
         user.is_active = False
         user.updated_at = _now()
         self.session.add(user)
@@ -397,6 +408,8 @@ class OrderService(BaseService):
         if order is None:
             raise ValueError("Order not found.")
         _ensure_admin(actor)
+        if order.status == OrderStatus.CANCELLED:
+            raise ValueError("Order is already deleted.")
         now = _now()
         order.status = OrderStatus.CANCELLED
         order.cancelled_at = now
@@ -475,3 +488,47 @@ class RefundService(BaseService):
             self.session.add(order)
         self.session.flush()
         return refund
+
+
+class AuditService(BaseService):
+    def suppress_event(self, actor: User, event_key: str) -> None:
+        _ensure_admin(actor)
+        event_key = event_key.strip()
+        if not event_key:
+            raise ValueError("Audit event key is required.")
+        existing = (
+            self.session.query(AuditEventSuppression)
+            .filter_by(event_key=event_key)
+            .one_or_none()
+        )
+        if existing is not None:
+            return
+        self.session.add(
+            AuditEventSuppression(
+                event_key=event_key,
+                suppressed_by_user_id=actor.id,
+            )
+        )
+        self.session.flush()
+
+
+class AuditService(BaseService):
+    def suppress_event(self, actor: User, event_key: str) -> None:
+        _ensure_admin(actor)
+        event_key = event_key.strip()
+        if not event_key:
+            raise ValueError("Audit event key is required.")
+        existing = (
+            self.session.query(AuditEventSuppression)
+            .filter_by(event_key=event_key)
+            .one_or_none()
+        )
+        if existing is not None:
+            return
+        self.session.add(
+            AuditEventSuppression(
+                event_key=event_key,
+                suppressed_by_user_id=actor.id,
+            )
+        )
+        self.session.flush()

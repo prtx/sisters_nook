@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/delete_icon_button.html" import delete_icon_button %}
 {% block title %}Audit Log | Sisters Nook{% endblock %}
 {% block page_title %}Audit Log{% endblock %}
 {% block page_subtitle %}Important system actions{% endblock %}
@@ -54,6 +55,7 @@
           <th>Target</th>
           <th>Old value</th>
           <th>New value</th>
+          <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -65,9 +67,15 @@
             <td>{{ event.target }}</td>
             <td>{{ event.old_value or "-" }}</td>
             <td>{{ event.new_value or "-" }}</td>
+            <td>
+              <form method="post" action="{{ url_for('audit.delete_event') }}" onsubmit="return confirm('Remove this entry from the audit log?');">
+                <input type="hidden" name="event_key" value="{{ event.event_key }}">
+                {{ delete_icon_button("Delete audit entry") }}
+              </form>
+            </td>
           </tr>
         {% else %}
-          <tr><td colspan="6">No audit events found.</td></tr>
+          <tr><td colspan="7">No audit events found.</td></tr>
         {% endfor %}
         </tbody>
       </table>

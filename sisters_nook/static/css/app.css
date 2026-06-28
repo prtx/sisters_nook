@@ -354,6 +354,7 @@ a {
 
 .primary-button,
 .secondary-button,
+.danger-button,
 button {
   border: none;
   border-radius: 12px;
@@ -371,6 +372,25 @@ button {
   background: var(--surface-variant);
   color: var(--on-surface);
   border: 1px solid var(--outline-variant);
+}
+
+.danger-button {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid #efb4b4;
+}
+
+.danger-button.icon-button {
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.danger-button.icon-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .toggle-group {

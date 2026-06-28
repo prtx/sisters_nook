@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/delete_icon_button.html" import delete_icon_button %}
 {% block title %}Order History | Sisters Nook{% endblock %}
 {% block page_title %}Order History{% endblock %}
 {% block page_subtitle %}View, filter, and manage past orders{% endblock %}
@@ -57,6 +58,11 @@
               {% if order.status.value == "open" %}
                 <a class="secondary-button" href="{{ url_for('orders.edit', order_id=order.id) }}">Edit</a>
                 <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
+              {% endif %}
+              {% if is_admin and order.status.value != "cancelled" %}
+                <form method="post" action="{{ url_for('orders.delete', order_id=order.id) }}" onsubmit="return confirm('Delete this order? It will be marked cancelled. Payment records are kept.');">
+                  {{ delete_icon_button("Delete order") }}
+                </form>
               {% endif %}
             </td>
           </tr>

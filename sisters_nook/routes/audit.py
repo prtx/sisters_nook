@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from sisters_nook.db import get_session
+from sisters_nook.services import AuditService
 from sisters_nook.web import queries
-from sisters_nook.web.auth_utils import admin_required
+from sisters_nook.web.auth_utils import admin_required, get_current_user
 
 audit_bp = Blueprint("audit", __name__)
 
@@ -104,3 +105,17 @@ def list_audit():
         total_count=len(events),
         filtered_count=len(filtered),
     )
+
+
+@audit_bp.route("/audit/delete", methods=["POST"])
+@admin_required
+def delete_event():
+    event_key = request.form.get("event_key", "").strip()
+    with get_session() as db_session:
+        actor = get_current_user(db_session)
+        try:
+            AuditService(db_session).suppress_event(actor, event_key)
+            flash("Audit entry removed.", "success")
+        except Exception as exc:
+            flash(str(exc), "danger")
+    return redirect(request.referrer or url_for("audit.list_audit"))

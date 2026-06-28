@@ -105,13 +105,17 @@ def price_history(item_id: str):
     return render_template("menu/price_history.html", item=item, history=history, user_emails=user_emails)
 
 
+@menu_bp.route("/menu/<item_id>/delete", methods=["POST"])
 @menu_bp.route("/menu/<item_id>/deactivate", methods=["POST"])
 @admin_required
-def deactivate(item_id: str):
+def delete(item_id: str):
     with get_session() as db_session:
         user = get_current_user(db_session)
-        MenuService(db_session).deactivate_menu_item(user, item_id)
-        flash("Menu item deactivated.", "success")
+        try:
+            MenuService(db_session).deactivate_menu_item(user, item_id)
+            flash("Menu item deleted.", "success")
+        except Exception as exc:
+            flash(str(exc), "danger")
     return redirect(url_for("menu.list_menu"))
 
 

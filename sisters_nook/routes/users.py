@@ -71,13 +71,17 @@ def edit_user(user_id: str):
     return render_template("users/edit.html", user=user, roles=roles)
 
 
+@users_bp.route("/users/<user_id>/delete", methods=["POST"])
 @users_bp.route("/users/<user_id>/deactivate", methods=["POST"])
 @admin_required
-def deactivate_user(user_id: str):
+def delete_user(user_id: str):
     with get_session() as db_session:
         actor = get_current_user(db_session)
-        UserService(db_session).deactivate_user(actor, user_id)
-        flash("User deactivated.", "success")
+        try:
+            UserService(db_session).deactivate_user(actor, user_id)
+            flash("User deleted.", "success")
+        except Exception as exc:
+            flash(str(exc), "danger")
     return redirect(url_for("users.list_users"))
 
 

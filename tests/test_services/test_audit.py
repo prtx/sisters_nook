@@ -108,9 +108,12 @@ def test_AUDIT_006_refund_creation_recorded(audit_setup):
 def test_AUDIT_007_user_deactivation_reactivation_recorded(audit_setup):
     user_service = audit_setup["user_service"]
     admin = audit_setup["admin"]
-    deactivated = user_service.deactivate_user(admin, admin.id)
+    target = user_service.create_user(
+        admin, "Temp", "User", "temp@sisters.local", "hash", UserRole.EMPLOYEE
+    )
+    deactivated = user_service.deactivate_user(admin, target.id)
     assert not deactivated.is_active
-    reactivated = user_service.reactivate_user(admin, admin.id)
+    reactivated = user_service.reactivate_user(admin, target.id)
     assert reactivated.is_active
 
 

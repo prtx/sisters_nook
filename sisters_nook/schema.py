@@ -200,3 +200,15 @@ class Refund(Base):
         return f"<Refund NRs {self.amount} for {self.payment_id}>"
 
 
+class AuditEventSuppression(Base):
+    __tablename__ = "audit_event_suppressions"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_key = Column(String(64), unique=True, nullable=False, index=True)
+    suppressed_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    suppressed_at = Column(DateTime, default=current_time, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<AuditEventSuppression {self.event_key}>"
+
+

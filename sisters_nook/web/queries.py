@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -7,6 +8,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from sisters_nook.schema import (
+    AuditEventSuppression,
     MenuItem,
     MenuItemPriceHistory,
     Order,
@@ -114,6 +116,32 @@ class AuditEvent:
     target: str
     old_value: str
     new_value: str
+    event_key: str = ""
+
+
+def audit_event_key(timestamp: datetime, action: str, target: str, user_email: str) -> str:
+    ts = timestamp.replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+    raw = f"{ts}|{action}|{target}|{user_email}"
+    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+
+def _audit_event(
+    timestamp: datetime,
+    user_email: str,
+    action: str,
+    target: str,
+    old_value: str,
+    new_value: str,
+) -> AuditEvent:
+    return AuditEvent(
+        timestamp=timestamp,
+        user_email=user_email,
+        action=action,
+        target=target,
+        old_value=old_value,
+        new_value=new_value,
+        event_key=audit_event_key(timestamp, action, target, user_email),
+    )
 
 
 def _user_email(db_session: Session, user_id: str | None) -> str:
@@ -125,10 +153,14 @@ def _user_email(db_session: Session, user_id: str | None) -> str:
 
 def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
     events: list[AuditEvent] = []
+    suppressed = {
+        row.event_key
+        for row in db_session.query(AuditEventSuppression.event_key).all()
+    }
 
     for order in db_session.query(Order).all():
         events.append(
-            AuditEvent(
+            _audit_event(
                 timestamp=order.created_at,
                 user_email=_user_email(db_session, order.created_by_user_id),
                 action="order_created",
@@ -139,7 +171,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
         )
         if order.paid_at:
             events.append(
-                AuditEvent(
+                _audit_event(
                     timestamp=order.paid_at,
                     user_email=_user_email(db_session, order.created_by_user_id),
                     action="order_paid",
@@ -150,7 +182,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
             )
         if order.cancelled_at:
             events.append(
-                AuditEvent(
+                _audit_event(
                     timestamp=order.cancelled_at,
                     user_email=_user_email(db_session, order.created_by_user_id),
                     action="order_cancelled",
@@ -162,7 +194,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
 
     for payment in db_session.query(Payment).all():
         events.append(
-            AuditEvent(
+            _audit_event(
                 timestamp=payment.created_at,
                 user_email=_user_email(db_session, payment.logged_by_user_id),
                 action="payment_logged",
@@ -174,7 +206,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
 
     for item in db_session.query(MenuItem).all():
         events.append(
-            AuditEvent(
+            _audit_event(
                 timestamp=item.created_at,
                 user_email=_user_email(db_session, item.created_by_user_id),
                 action="menu_created",
@@ -187,7 +219,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
     for record in db_session.query(MenuItemPriceHistory).all():
         item = db_session.get(MenuItem, record.menu_item_id)
         events.append(
-            AuditEvent(
+            _audit_event(
                 timestamp=record.changed_at,
                 user_email=_user_email(db_session, record.changed_by_user_id),
                 action="price_change",
@@ -199,7 +231,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
 
     for refund in db_session.query(Refund).all():
         events.append(
-            AuditEvent(
+            _audit_event(
                 timestamp=refund.created_at,
                 user_email=_user_email(db_session, refund.refunded_by_user_id),
                 action="refund_created",
@@ -212,7 +244,7 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
     for user in db_session.query(User).all():
         if user.updated_at and user.updated_at > user.created_at + timedelta(seconds=1):
             events.append(
-                AuditEvent(
+                _audit_event(
                     timestamp=user.updated_at,
                     user_email=user.email,
                     action="user_updated",
@@ -222,5 +254,6 @@ def audit_events(db_session: Session, limit: int = 100) -> list[AuditEvent]:
                 )
             )
 
+    events = [event for event in events if event.event_key not in suppressed]
     events.sort(key=lambda e: e.timestamp, reverse=True)
     return events[:limit]

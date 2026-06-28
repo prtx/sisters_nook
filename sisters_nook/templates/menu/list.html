@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/delete_icon_button.html" import delete_icon_button %}
 {% block title %}Menu | Sisters Nook{% endblock %}
 {% block page_title %}Menu{% endblock %}
 {% block page_subtitle %}Active and inactive items with admin controls{% endblock %}
@@ -51,12 +52,12 @@
                 <a class="secondary-button" href="{{ url_for('menu.edit_menu', item_id=item.id) }}">Edit</a>
                 <a class="secondary-button" href="{{ url_for('menu.price_history', item_id=item.id) }}">Price history</a>
                 {% if item.is_active %}
-                  <form method="post" action="{{ url_for('menu.deactivate', item_id=item.id) }}">
-                    <button class="secondary-button" type="submit">Deactivate</button>
+                  <form method="post" action="{{ url_for('menu.delete', item_id=item.id) }}" onsubmit="return confirm('Delete this menu item? It will be hidden from new orders but kept in order history.');">
+                    {{ delete_icon_button("Delete menu item") }}
                   </form>
                 {% else %}
                   <form method="post" action="{{ url_for('menu.reactivate', item_id=item.id) }}">
-                    <button class="secondary-button" type="submit">Reactivate</button>
+                    <button class="secondary-button" type="submit">Restore</button>
                   </form>
                 {% endif %}
               </td>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/delete_icon_button.html" import delete_icon_button %}
 {% block title %}Users | Sisters Nook{% endblock %}
 {% block page_title %}Users{% endblock %}
 {% block page_subtitle %}Admin-only user management{% endblock %}
@@ -30,13 +31,13 @@
             <td>{{ user.last_login_at.strftime("%Y-%m-%d %H:%M") if user.last_login_at else "-" }}</td>
             <td class="button-row">
               <a class="secondary-button" href="{{ url_for('users.edit_user', user_id=user.id) }}">Edit</a>
-              {% if user.is_active %}
-                <form method="post" action="{{ url_for('users.deactivate_user', user_id=user.id) }}">
-                  <button class="secondary-button" type="submit">Deactivate</button>
+              {% if user.is_active and user.id != current_user.id %}
+                <form method="post" action="{{ url_for('users.delete_user', user_id=user.id) }}" onsubmit="return confirm('Delete this user? They will be deactivated and unable to sign in.');">
+                  {{ delete_icon_button("Delete user") }}
                 </form>
-              {% else %}
+              {% elif not user.is_active %}
                 <form method="post" action="{{ url_for('users.reactivate_user', user_id=user.id) }}">
-                  <button class="secondary-button" type="submit">Reactivate</button>
+                  <button class="secondary-button" type="submit">Restore</button>
                 </form>
               {% endif %}
             </td>

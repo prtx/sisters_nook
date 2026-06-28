@@ -66,7 +66,11 @@ def history():
         date_to = today
     with get_session() as db_session:
         user = get_current_user(db_session)
-        query = db_session.query(Order).order_by(Order.created_at.desc())
+        query = (
+            db_session.query(Order)
+            .options(selectinload(Order.payments))
+            .order_by(Order.created_at.desc())
+        )
         if status_filter:
             query = query.filter(Order.status == OrderStatus(status_filter))
         if date_from:
@@ -225,14 +229,15 @@ def payment(order_id: str):
     )
 
 
+@orders_bp.route("/orders/<order_id>/delete", methods=["POST"])
 @orders_bp.route("/orders/<order_id>/cancel", methods=["POST"])
 @admin_required
-def cancel(order_id: str):
+def delete(order_id: str):
     with get_session() as db_session:
         user = get_current_user(db_session)
         try:
             OrderService(db_session).cancel_order(user, order_id)
-            flash("Order cancelled.", "success")
+            flash("Order deleted.", "success")
         except Exception as exc:
             flash(str(exc), "danger")
-    return redirect(url_for("orders.detail", order_id=order_id))
+    return redirect(request.referrer or url_for("orders.history"))
