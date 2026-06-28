@@ -55,7 +55,7 @@ def test_login_and_dashboard(client):
     assert resp.status_code == 200
     resp = client.get("/")
     assert resp.status_code == 200
-    assert b"Dashboard" in resp.data
+    assert b"Home" in resp.data
     assert b"Today sales" in resp.data
 
 
