@@ -13,9 +13,13 @@ users_bp = Blueprint("users", __name__)
 @users_bp.route("/users")
 @admin_required
 def list_users():
+    active_only = request.args.get("active_only") in {"1", "true", "yes"}
     with get_session() as db_session:
-        users = db_session.query(User).order_by(User.email).all()
-    return render_template("users/list.html", users=users)
+        query = db_session.query(User).order_by(User.email)
+        if active_only:
+            query = query.filter(User.is_active.is_(True))
+        users = query.all()
+    return render_template("users/list.html", users=users, active_only=active_only)
 
 
 @users_bp.route("/users/new", methods=["GET", "POST"])

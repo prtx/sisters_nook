@@ -2,12 +2,28 @@
 {% from "partials/delete_icon_button.html" import delete_icon_button %}
 {% block title %}Users | Sisters Nook{% endblock %}
 {% block page_title %}Users{% endblock %}
-{% block page_subtitle %}Admin-only user management{% endblock %}
+{% block page_subtitle %}Active and inactive accounts with admin controls{% endblock %}
 {% block content %}
   <article class="card">
     <div class="section-header">
       <h2 class="section-title">User accounts</h2>
-      <a class="primary-button" href="{{ url_for('users.create_user') }}">Create user</a>
+      <div class="button-row">
+        <div class="toggle-group" role="tablist" aria-label="User filter">
+          <a
+            class="toggle-option {{ 'active' if active_only else '' }}"
+            href="{{ url_for('users.list_users', active_only=1) }}"
+            role="tab"
+            aria-selected="{{ 'true' if active_only else 'false' }}"
+          >Active only</a>
+          <a
+            class="toggle-option {{ 'active' if not active_only else '' }}"
+            href="{{ url_for('users.list_users') }}"
+            role="tab"
+            aria-selected="{{ 'true' if not active_only else 'false' }}"
+          >Show all</a>
+        </div>
+        <a class="primary-button" href="{{ url_for('users.create_user') }}">Create user</a>
+      </div>
     </div>
     <div class="table-wrap">
       <table>

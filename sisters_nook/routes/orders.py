@@ -73,13 +73,19 @@ def history():
         )
         if status_filter:
             query = query.filter(Order.status == OrderStatus(status_filter))
+        else:
+            query = query.filter(Order.status != OrderStatus.CANCELLED)
         if date_from:
             query = query.filter(Order.created_at >= datetime.fromisoformat(date_from))
         if date_to:
             end = datetime.fromisoformat(date_to)
             query = query.filter(Order.created_at <= end.replace(hour=23, minute=59, second=59))
         orders = query.all()
-        total_count = db_session.query(Order).count()
+        total_count = (
+            db_session.query(Order)
+            .filter(Order.status != OrderStatus.CANCELLED)
+            .count()
+        )
         is_admin = user.role == UserRole.ADMIN
     return render_template(
         "orders/history.html",
@@ -192,6 +198,9 @@ def detail(order_id: str):
         )
         if order is None:
             flash("Order not found.", "danger")
+            return redirect(url_for("orders.history"))
+        if order.status == OrderStatus.CANCELLED:
+            flash("Order was deleted.", "warning")
             return redirect(url_for("orders.history"))
         is_admin = user.role == UserRole.ADMIN
     return render_template("orders/detail.html", order=order, is_admin=is_admin)

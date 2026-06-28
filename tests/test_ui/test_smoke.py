@@ -120,6 +120,28 @@ def test_employee_blocked_from_analysis(client):
     assert b"Admin access required" in resp.data
 
 
+def test_deleted_order_hidden_from_history(client):
+    from sisters_nook.schema import Order, OrderStatus
+
+    client.post("/login", data={"email": "admin@sisters.local", "password": "changeme"})
+    session = SessionLocal()
+    order = session.query(Order).filter(Order.status != OrderStatus.CANCELLED).first()
+    order_id = order.id
+    order_number = order.order_number
+    session.close()
+
+    resp = client.post(f"/orders/{order_id}/delete", follow_redirects=True)
+    assert resp.status_code == 200
+    assert b"Order deleted" in resp.data
+
+    history = client.get("/orders")
+    assert history.status_code == 200
+    assert order_number.encode() not in history.data
+
+    detail = client.get(f"/orders/{order_id}", follow_redirects=True)
+    assert b"Order was deleted" in detail.data
+
+
 def test_admin_can_load_analysis(client):
     client.post("/login", data={"email": "admin@sisters.local", "password": "changeme"})
     resp = client.get("/analysis")

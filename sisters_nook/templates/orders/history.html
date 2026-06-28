@@ -60,7 +60,7 @@
                 <a class="secondary-button" href="{{ url_for('orders.payment', order_id=order.id) }}">Log payment</a>
               {% endif %}
               {% if is_admin and order.status.value != "cancelled" %}
-                <form method="post" action="{{ url_for('orders.delete', order_id=order.id) }}" onsubmit="return confirm('Delete this order? It will be marked cancelled. Payment records are kept.');">
+                <form method="post" action="{{ url_for('orders.delete', order_id=order.id) }}" onsubmit="return confirm('Remove this order from history? The record is kept for audit purposes.');">
                   {{ delete_icon_button("Delete order") }}
                 </form>
               {% endif %}
